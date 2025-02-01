@@ -66,7 +66,7 @@ public partial class XmlCompilerFrontend
 		return _namespaceRegex.IsMatch(identifier);
 	}
 
-	private static readonly XName _schemaElementName = "Schema";
+	private static readonly XName _registryElementName = "Registry";
 	private static readonly XName _usingElementName = "Using";
 	private static readonly XName _metadataElementName = "Metadata";
 	private static readonly XName _entityElementName = "Entity";

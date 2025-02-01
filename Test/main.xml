@@ -1,7 +1,7 @@
 
 
 
-<Schema name="MainSchema" namespace="ZeroGames.ZHotel.DataRegistry.MainSchema">
+<Registry name="MainRegistry" namespace="ZeroGames.ZHotel.DataRegistry.Main">
 
     <Entity name="Item" namespace="System">
         <PrimaryKey type="uint64" name="Id" />
@@ -25,4 +25,4 @@
         <Element name="Mana" value="1" />
     </Enum>
 
-</Schema>
+</Registry>

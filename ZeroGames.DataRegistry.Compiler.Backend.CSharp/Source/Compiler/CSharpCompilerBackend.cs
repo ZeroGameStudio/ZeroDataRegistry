@@ -24,7 +24,7 @@ public partial class CSharpCompilerBackend : ICompilerBackend
 	ICompilationContext ICompilationContextReceiver.CompilationContext { set => CompilationContext = value; }
 
 	private Task<CompilationUnitResult>[] SetupCompilations(ISchema schema)
-		=> schema.DataTypes.Select(CompileTypeAsync).Append(CompileSchemaAsync(schema)).ToArray();
+		=> schema.DataTypes.Select(CompileTypeAsync).Append(CompileRegistryAsync(schema)).ToArray();
 
 	private readonly CSharpCompilerBackendOptions _options;
 

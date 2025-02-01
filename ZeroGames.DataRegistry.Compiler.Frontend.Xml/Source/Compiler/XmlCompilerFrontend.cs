@@ -15,10 +15,10 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 	
 	public Task<IEnumerable<SchemaSourceUri>> GetUsingSchemasAsync(Stream source)
 	{
-		XElement schemaElement = GetSchemaElement(source);
+		XElement root = GetRootElement(source);
 		try
 		{
-			IEnumerable<SchemaSourceUri> result = schemaElement.Elements(_usingElementName).Select(e => new SchemaSourceUri(e.Attribute(_uriAttributeName)!.Value)).ToArray();
+			IEnumerable<SchemaSourceUri> result = root.Elements(_usingElementName).Select(e => new SchemaSourceUri(e.Attribute(_uriAttributeName)!.Value)).ToArray();
 			return Task.FromResult(result);
 		}
 		catch (Exception ex)
@@ -29,13 +29,13 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 
 	public async Task<ISchema> CompileAsync(SchemaSourceUri uri, Stream source)
 	{
-		return ParseSchema(uri, GetSchemaElement(source), await GetUsingSchemasAsync(source));
+		return ParseSchema(uri, GetRootElement(source), await GetUsingSchemasAsync(source));
 	}
 
 	public ICompilationContext CompilationContext { get; private set; } = null!;
 	ICompilationContext ICompilationContextReceiver.CompilationContext { set => CompilationContext = value; }
 
-	private XElement GetSchemaElement(Stream source)
+	private XElement GetRootElement(Stream source)
 	{
 		XDocument doc;
 		try
@@ -48,22 +48,22 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 			throw new ParserException(ex);
 		}
 
-		XElement? schemaElement = doc.Root;
-		if (schemaElement is null || schemaElement.Name != _schemaElementName)
+		XElement? root = doc.Root;
+		if (root is null || root.Name != _registryElementName)
 		{
 			throw new ParserException();
 		}
 		
-		return schemaElement;
+		return root;
 	}
 
-	private ISchema ParseSchema(SchemaSourceUri uri, XElement schemaElement, IEnumerable<SchemaSourceUri> usingSchemas)
+	private ISchema ParseSchema(SchemaSourceUri uri, XElement root, IEnumerable<SchemaSourceUri> usingSchemas)
 	{
-		Schema schema = new(schema => ParseDataTypes(schemaElement, schema), schema => ParseMetadatas(schemaElement, schema))
+		Schema schema = new(schema => ParseDataTypes(root, schema), schema => ParseMetadatas(root, schema))
 		{
 			Uri = uri,
-			Name = GetName(schemaElement),
-			Namespace = GetNamespace(schemaElement),
+			Name = GetName(root),
+			Namespace = GetNamespace(root),
 			UsingSchemas = usingSchemas.Select(us => CompilationContext.GetSchema(us)).ToHashSet(),
 		};
 

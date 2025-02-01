@@ -7,12 +7,12 @@ namespace ZeroGames.DataRegistry.Compiler.Backend.CSharp;
 public partial class CSharpCompilerBackend
 {
 
-	private Task<CompilationUnitResult> CompileSchemaAsync(ISchema schema)
+	private Task<CompilationUnitResult> CompileRegistryAsync(ISchema schema)
 		=> Task.Run(() =>
 		{
 			Dictionary<string, string> properties = new()
 			{
-				["Type"] = "Schema",
+				["Type"] = "Registry",
 				["Uri"] = schema.Uri.Address,
 				["Name"] = schema.Name,
 				["Namespace"] = schema.Namespace,
