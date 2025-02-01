@@ -1,0 +1,32 @@
+{
+	"SourceDirs": [
+		"D:/Projects/CSharp/ZeroDataRegistry/Test"
+	],
+	
+	"UInt8TypeName": "uint8",
+	"UInt16TypeName": "uint16",
+	"UInt32TypeName": "uint32",
+	"UInt64TypeName": "uint64",
+	"Int8TypeName": "int8",
+	"Int16TypeName": "int16",
+	"Int32TypeName": "int32",
+	"Int64TypeName": "int64",
+	"FloatTypeName": "float",
+	"DoubleTypeName": "double",
+	"BoolTypeName": "bool",
+	"StringTypeName": "string",
+
+	"ListTypeName": "list",
+	"SetTypeName": "set",
+	"MapTypeName": "map",
+	"OptionalTypeName": "optional",
+	
+	"DefaultEnumUnderlyingTypeName": "uint8",
+	
+	"ImplicitlyUsings": [
+		"System",
+		"System.Collections.Generic"
+	],
+	
+	"RequiresOutputDirNotExists": false
+}
