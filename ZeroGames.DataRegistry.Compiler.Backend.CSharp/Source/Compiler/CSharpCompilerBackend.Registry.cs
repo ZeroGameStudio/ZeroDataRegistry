@@ -18,7 +18,7 @@ public partial class CSharpCompilerBackend
 				["Namespace"] = schema.Namespace,
 				["Language"] = "C#",
 			};
-		
+
 			return Task.FromResult(new CompilationUnitResult(new MemoryStream(), ECompilationErrorLevel.Success, "Compilation success.", properties));
 		});
 }

@@ -29,6 +29,7 @@ internal readonly struct CompilerClientConfig
 	public required HashSet<string> ImplicitlyUsings { get; init; }
 	
 	public required bool RequiresOutputDirNotExists { get; init; }
+	public bool GeneratesPartialTypes { get; init; }
 }
 
 

@@ -20,7 +20,7 @@ public partial class CSharpCompilerBackend
 	}
 
 	private string GetTypeKindCode(IUserDefinedDataType type)
-		=> type is IEnumDataType ? "enum" : "class";
+		=> type is IEnumDataType ? "enum" : _options.GeneratesPartialTypes ? "partial class" : "class";
 
 	private string GetBaseTypeCode(IUserDefinedDataType type)
 		=> type.BaseType is {} baseType ? $" : {baseType.Name}" : string.Empty;
