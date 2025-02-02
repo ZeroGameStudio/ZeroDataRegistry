@@ -1,7 +1,5 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
-using ZeroGames.DataRegistry.Compiler.Core;
-
 namespace ZeroGames.DataRegistry.Compiler.Frontend;
 
 /// <summary>

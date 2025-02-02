@@ -2,7 +2,6 @@
 
 using System.Collections.Immutable;
 using ZeroGames.DataRegistry.Compiler.Backend;
-using ZeroGames.DataRegistry.Compiler.Core;
 
 namespace ZeroGames.DataRegistry.Compiler.Server;
 

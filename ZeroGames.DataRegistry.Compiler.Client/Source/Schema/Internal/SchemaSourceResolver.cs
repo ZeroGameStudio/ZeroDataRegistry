@@ -1,7 +1,6 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
 using System.Diagnostics.CodeAnalysis;
-using ZeroGames.DataRegistry.Compiler.Core;
 
 namespace ZeroGames.DataRegistry.Compiler.Client;
 

@@ -3,7 +3,6 @@
 using System.Text.Json;
 using ZeroGames.DataRegistry.Compiler.Backend;
 using ZeroGames.DataRegistry.Compiler.Backend.CSharp;
-using ZeroGames.DataRegistry.Compiler.Core;
 using ZeroGames.DataRegistry.Compiler.Frontend;
 using ZeroGames.DataRegistry.Compiler.Frontend.Xml;
 using ZeroGames.DataRegistry.Compiler.Server;

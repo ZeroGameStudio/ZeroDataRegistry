@@ -1,7 +1,6 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
 using System.Text;
-using ZeroGames.DataRegistry.Compiler.Core;
 
 namespace ZeroGames.DataRegistry.Compiler.Backend.CSharp;
 

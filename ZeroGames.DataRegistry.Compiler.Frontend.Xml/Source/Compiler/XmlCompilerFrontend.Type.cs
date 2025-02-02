@@ -1,14 +1,11 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
 using System.Xml.Linq;
-using ZeroGames.DataRegistry.Compiler.Core;
 
 namespace ZeroGames.DataRegistry.Compiler.Frontend.Xml;
 
-
 public partial class XmlCompilerFrontend
 {
-	
 	
 	private IReadOnlyList<IUserDefinedDataType> ParseDataTypes(XElement schemaElement, ISchema schema)
 	{

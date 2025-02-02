@@ -1,7 +1,6 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
 using ZeroGames.DataRegistry.Compiler.Backend;
-using ZeroGames.DataRegistry.Compiler.Core;
 using ZeroGames.DataRegistry.Compiler.Frontend;
 
 namespace ZeroGames.DataRegistry.Compiler.Server;

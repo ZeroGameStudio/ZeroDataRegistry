@@ -25,7 +25,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Backend\ZeroGames.DataRegistry.Compiler.Backend.csproj" />
-      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Core\ZeroGames.DataRegistry.Compiler.Core.csproj" />
+      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler\ZeroGames.DataRegistry.Compiler.csproj" />
       <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Frontend\ZeroGames.DataRegistry.Compiler.Frontend.csproj" />
     </ItemGroup>
 
