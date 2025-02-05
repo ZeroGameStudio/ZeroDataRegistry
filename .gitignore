@@ -9,7 +9,4 @@
 obj/
 bin/
 
-# ZeroDataRegistry Intermediate files
-gen/
-
 

@@ -1,0 +1,28 @@
+
+
+
+<Registry name="MainRegistry" namespace="ZeroGames.DataRegistry.Test">
+
+    <Entity name="Item" namespace="System">
+        <PrimaryKey type="uint64" name="Id" />
+        <Property type="string" name="Name" />
+        <ForeignKey type="Icon" name="Icon" />
+    </Entity>
+
+    <Entity name="Icon">
+        <PrimaryKey type="uint64" name="Id" />
+        <Property type="string" name="Path" />
+    </Entity>
+
+    <Struct name="Point">
+        <Property type="double" name="X" />
+        <Property type="double" name="Y" />
+        <Property type="double" name="Z" />
+    </Struct>
+
+    <Enum name="EDamageType">
+        <Element name="Phys" value="0" />
+        <Element name="Mana" value="1" />
+    </Enum>
+
+</Registry>

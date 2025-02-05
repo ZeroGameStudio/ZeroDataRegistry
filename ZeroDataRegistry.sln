@@ -3,27 +3,31 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Frontend.Xml", "ZeroGames.DataRegistry.Compiler.Frontend.Xml\ZeroGames.DataRegistry.Compiler.Frontend.Xml.csproj", "{A7A985EA-C4AB-4B84-BBC5-F75999D0E75D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Backend.CSharp", "ZeroGames.DataRegistry.Compiler.Backend.CSharp\ZeroGames.DataRegistry.Compiler.Backend.CSharp.csproj", "{5EE5CA60-71FF-48DD-91F8-AAB67A002E79}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Client", "ZeroGames.DataRegistry.Compiler.Client\ZeroGames.DataRegistry.Compiler.Client.csproj", "{28E04737-CB33-46C3-B016-5763FD047556}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Frontend", "ZeroGames.DataRegistry.Compiler.Frontend\ZeroGames.DataRegistry.Compiler.Frontend.csproj", "{C4EA012A-2A7D-41FA-A71F-56C96529386C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Backend", "ZeroGames.DataRegistry.Compiler.Backend\ZeroGames.DataRegistry.Compiler.Backend.csproj", "{7CFD0286-55CD-466E-88B8-943B807214A4}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Compiler", "Compiler", "{F65B672B-93C6-401B-AE28-323A468EDC02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Server", "ZeroGames.DataRegistry.Compiler.Server\ZeroGames.DataRegistry.Compiler.Server.csproj", "{CAA8A885-42D3-438E-ADD6-1962F5776946}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler", "Compiler\ZeroGames.DataRegistry.Compiler\ZeroGames.DataRegistry.Compiler.csproj", "{EADF10BA-5EF7-4B02-B16A-A363CF1E1039}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Frontend", "Compiler\ZeroGames.DataRegistry.Compiler.Frontend\ZeroGames.DataRegistry.Compiler.Frontend.csproj", "{C4EA012A-2A7D-41FA-A71F-56C96529386C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Backend", "Compiler\ZeroGames.DataRegistry.Compiler.Backend\ZeroGames.DataRegistry.Compiler.Backend.csproj", "{7CFD0286-55CD-466E-88B8-943B807214A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Frontend.Xml", "Compiler\ZeroGames.DataRegistry.Compiler.Frontend.Xml\ZeroGames.DataRegistry.Compiler.Frontend.Xml.csproj", "{A7A985EA-C4AB-4B84-BBC5-F75999D0E75D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Backend.CSharp", "Compiler\ZeroGames.DataRegistry.Compiler.Backend.CSharp\ZeroGames.DataRegistry.Compiler.Backend.CSharp.csproj", "{5EE5CA60-71FF-48DD-91F8-AAB67A002E79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Server", "Compiler\ZeroGames.DataRegistry.Compiler.Server\ZeroGames.DataRegistry.Compiler.Server.csproj", "{CAA8A885-42D3-438E-ADD6-1962F5776946}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler.Client", "Compiler\ZeroGames.DataRegistry.Compiler.Client\ZeroGames.DataRegistry.Compiler.Client.csproj", "{28E04737-CB33-46C3-B016-5763FD047556}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runtime", "Runtime", "{145A9B79-8DAA-4CE8-9597-D46B5C0AB8C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Runtime.Core", "ZeroGames.DataRegistry.Runtime.Core\ZeroGames.DataRegistry.Runtime.Core.csproj", "{38F01DDF-36A7-440B-A142-33523BE9FEE2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Runtime", "Runtime\ZeroGames.DataRegistry.Runtime\ZeroGames.DataRegistry.Runtime.csproj", "{CF024FFE-2B91-4CEF-A588-29476643B22F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Runtime.Serialization", "ZeroGames.DataRegistry.Runtime.Serialization\ZeroGames.DataRegistry.Runtime.Serialization.csproj", "{16B70696-CF1F-407D-A006-2AC4F3EC7ED3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Runtime.Serialization", "Runtime\ZeroGames.DataRegistry.Runtime.Serialization\ZeroGames.DataRegistry.Runtime.Serialization.csproj", "{16B70696-CF1F-407D-A006-2AC4F3EC7ED3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Compiler", "ZeroGames.DataRegistry.Compiler\ZeroGames.DataRegistry.Compiler.csproj", "{EADF10BA-5EF7-4B02-B16A-A363CF1E1039}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{BF73444C-34A9-4296-BB9C-ADCDAD888C70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroGames.DataRegistry.Test", "Test\ZeroGames.DataRegistry.Test\ZeroGames.DataRegistry.Test.csproj", "{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,10 +62,6 @@ Global
 		{CAA8A885-42D3-438E-ADD6-1962F5776946}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAA8A885-42D3-438E-ADD6-1962F5776946}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAA8A885-42D3-438E-ADD6-1962F5776946}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38F01DDF-36A7-440B-A142-33523BE9FEE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38F01DDF-36A7-440B-A142-33523BE9FEE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38F01DDF-36A7-440B-A142-33523BE9FEE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38F01DDF-36A7-440B-A142-33523BE9FEE2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{16B70696-CF1F-407D-A006-2AC4F3EC7ED3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{16B70696-CF1F-407D-A006-2AC4F3EC7ED3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16B70696-CF1F-407D-A006-2AC4F3EC7ED3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -70,6 +70,14 @@ Global
 		{EADF10BA-5EF7-4B02-B16A-A363CF1E1039}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EADF10BA-5EF7-4B02-B16A-A363CF1E1039}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EADF10BA-5EF7-4B02-B16A-A363CF1E1039}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF024FFE-2B91-4CEF-A588-29476643B22F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF024FFE-2B91-4CEF-A588-29476643B22F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF024FFE-2B91-4CEF-A588-29476643B22F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF024FFE-2B91-4CEF-A588-29476643B22F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7CFD0286-55CD-466E-88B8-943B807214A4} = {F65B672B-93C6-401B-AE28-323A468EDC02}
@@ -78,8 +86,9 @@ Global
 		{C4EA012A-2A7D-41FA-A71F-56C96529386C} = {F65B672B-93C6-401B-AE28-323A468EDC02}
 		{A7A985EA-C4AB-4B84-BBC5-F75999D0E75D} = {F65B672B-93C6-401B-AE28-323A468EDC02}
 		{CAA8A885-42D3-438E-ADD6-1962F5776946} = {F65B672B-93C6-401B-AE28-323A468EDC02}
-		{38F01DDF-36A7-440B-A142-33523BE9FEE2} = {145A9B79-8DAA-4CE8-9597-D46B5C0AB8C5}
 		{16B70696-CF1F-407D-A006-2AC4F3EC7ED3} = {145A9B79-8DAA-4CE8-9597-D46B5C0AB8C5}
 		{EADF10BA-5EF7-4B02-B16A-A363CF1E1039} = {F65B672B-93C6-401B-AE28-323A468EDC02}
+		{CF024FFE-2B91-4CEF-A588-29476643B22F} = {145A9B79-8DAA-4CE8-9597-D46B5C0AB8C5}
+		{0FA54D82-EFAA-4263-BF29-2D8D8B0D5516} = {BF73444C-34A9-4296-BB9C-ADCDAD888C70}
 	EndGlobalSection
 EndGlobal
