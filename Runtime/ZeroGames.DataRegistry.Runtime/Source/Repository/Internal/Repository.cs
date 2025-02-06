@@ -5,16 +5,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEntity>
+internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEntity>, IDynamicRepository
 	where TPrimaryKey : notnull
-	where TEntity : class, IEntity
+	where TEntity : class, IEntity<TPrimaryKey>
 {
-
-	public Repository(IRegistry registry, string name)
-	{
-		Registry = registry;
-		Name = name;
-	}
 
 	void IDisposable.Dispose()
 	{
@@ -41,6 +35,9 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 		this.GuardInvariant();
 		return _storage.TryGetValue(key, out value);
 	}
+	
+	void IDynamicRepository.RegisterEntity(object primaryKey, object entity)
+		=> _storage[(TPrimaryKey)primaryKey] = (TEntity)entity;
 
 	public TEntity this[TPrimaryKey key]
 	{
@@ -78,8 +75,8 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 		}
 	}
 
-	public IRegistry Registry { get; }
-	public string Name { get; }
+	public required IRegistry Registry { get; init; }
+	public required string Name { get; init; }
 	public bool IsDisposed { get; private set; }
 
 	private readonly Dictionary<TPrimaryKey, TEntity> _storage = new();

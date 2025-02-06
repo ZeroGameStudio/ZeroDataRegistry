@@ -200,7 +200,7 @@ public partial class XmlCompilerFrontend
 	private Func<IDataType> ParseNonContainerType(string path, XElement propertyElement, ISchema propertySchema)
 	{
 		string[] nodes = path.Split('.');
-		ISchema schema = nodes.Length == 2 ? CompilationContext.GetSchema(nodes[0]) : propertySchema;
+		ISchema schema = nodes.Length == 2 ? propertySchema.ImportMap[nodes[0]] : propertySchema;
 		string typeName = nodes.Last();
 		return () =>
 		{

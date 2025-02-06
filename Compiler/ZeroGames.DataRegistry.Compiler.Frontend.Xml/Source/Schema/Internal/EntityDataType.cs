@@ -12,7 +12,7 @@ internal sealed class EntityDataType : CompositeDataTypeBase, IEntityDataType
 	
 	public IEntityDataType? BaseType { get; private set; }
 	public required Func<IEntityDataType?> BaseTypeFactory { private get; init; }
-	public required IReadOnlyList<IProperty> PrimaryKey { get; init; }
+	public required IReadOnlyList<IProperty> PrimaryKeyComponents { get; init; }
 
 	protected override IEntityDataType? InternalBaseType => BaseType;
 }

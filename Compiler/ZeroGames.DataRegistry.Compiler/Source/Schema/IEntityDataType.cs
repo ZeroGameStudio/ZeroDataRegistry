@@ -5,7 +5,7 @@ namespace ZeroGames.DataRegistry.Compiler;
 public interface IEntityDataType : ICompositeDataType
 {
 	new IEntityDataType? BaseType { get; }
-	IReadOnlyList<IProperty> PrimaryKey { get; }
+	IReadOnlyList<IProperty> PrimaryKeyComponents { get; }
 }
 
 

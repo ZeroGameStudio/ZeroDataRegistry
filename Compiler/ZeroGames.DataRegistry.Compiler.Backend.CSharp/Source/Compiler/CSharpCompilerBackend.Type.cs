@@ -18,9 +18,18 @@ public partial class CSharpCompilerBackend
 			baseTypes.Add(baseType.Name);
 		}
 
-		if (type is IEntityDataType)
+		if (type is IEntityDataType { BaseType: null } entityType)
 		{
-			baseTypes.Add("IEntity");
+			if (entityType.PrimaryKeyComponents.Count > 7)
+			{
+				throw new NotSupportedException("Primary key more than 7-dimension is not supported.");
+			}
+
+			baseTypes.Add($"IEntity<{GetTypePrimaryKeyTypeCode(entityType)}>");
+		}
+		else if (type is IStructDataType { BaseType: null })
+		{
+			baseTypes.Add("IStruct");
 		}
 
 		return baseTypes.Count > 0 ? $" : {string.Join(", ", baseTypes)}" : string.Empty;
@@ -89,7 +98,15 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 
 	private string GetTypeMembersCode(IUserDefinedDataType type)
 	{
-		if (type is ICompositeDataType compositeType)
+		if (type is IEntityDataType { BaseType: null } entityType)
+		{
+			string primaryKeyValueCode = entityType.PrimaryKeyComponents.Count == 1
+				? entityType.PrimaryKeyComponents[0].Name
+				: $"({string.Join(", ", entityType.PrimaryKeyComponents.Select(component => component.Name))})";
+			string primaryKeyImplementation = $"public {GetTypePrimaryKeyTypeCode(entityType)} PrimaryKey => {primaryKeyValueCode};";
+			return string.Join(Environment.NewLine + Environment.NewLine, primaryKeyImplementation, GetTypePropertiesCode(entityType));
+		}
+		else if (type is ICompositeDataType compositeType)
 		{
 			return GetTypePropertiesCode(compositeType);
 		}
@@ -106,7 +123,13 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 	private string GetTypePropertiesCode(ICompositeDataType type)
 		=> string.Join(Environment.NewLine + Environment.NewLine, type.Properties.Select(property =>
 		{
-			string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : "[Property]";
+			if (property.Name == "PrimaryKey")
+			{
+				throw new NotSupportedException("Property name 'PrimaryKey' is reserved.");
+			}
+			
+			string defaultValueCode = !string.IsNullOrWhiteSpace(property.DefaultValue) ? $"(Default = \"{property.DefaultValue}\")" : string.Empty;
+			string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : $"[Property{defaultValueCode}]";
 			return $"{attributeCode}{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
 		}));
 
@@ -167,6 +190,7 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 			Dictionary<string, string> properties = new()
 			{
 				["Type"] = type is IEntityDataType ? "Entity" : type is IStructDataType ? "Struct" : type is IEnumDataType ? "Enum" : throw new EmitterException(),
+				["Schema"] = type.Schema.Name,
 				["Uri"] = $"{type.Schema.Name}.{type.Name}",
 				["Name"] = type.Name,
 				["Namespace"] = GetFullNamespace(type),

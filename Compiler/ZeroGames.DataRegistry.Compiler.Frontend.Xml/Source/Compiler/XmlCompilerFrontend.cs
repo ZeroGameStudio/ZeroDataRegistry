@@ -17,7 +17,11 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		XElement root = GetRootElement(source);
 		try
 		{
-			IEnumerable<SchemaSourceUri> result = root.Elements(_importElementName).Select(e => new SchemaSourceUri(e.Attribute(_uriAttributeName)!.Value)).ToArray();
+			IEnumerable<SchemaSourceUri> result = root
+				.Elements(_importElementName)
+				.Select(e => new SchemaSourceUri(e.Attribute(_uriAttributeName)!.Value))
+				.ToArray();
+			
 			return Task.FromResult(result);
 		}
 		catch (Exception ex)
@@ -26,10 +30,8 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		}
 	}
 
-	public async Task<ISchema> CompileAsync(SchemaSourceUri uri, Stream source)
-	{
-		return ParseSchema(uri, GetRootElement(source), await GetImportsAsync(source));
-	}
+	public Task<ISchema> CompileAsync(SchemaSourceUri uri, Stream source)
+		=> Task.FromResult(ParseSchema(uri, GetRootElement(source)));
 
 	public ICompilationContext CompilationContext { get; private set; } = null!;
 	ICompilationContext ICompilationContextReceiver.CompilationContext { set => CompilationContext = value; }
@@ -48,7 +50,7 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		}
 
 		XElement? root = doc.Root;
-		if (root is null || root.Name != _registryElementName)
+		if (root is null || root.Name != _schemaElementName)
 		{
 			throw new ParserException();
 		}
@@ -56,14 +58,22 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		return root;
 	}
 
-	private ISchema ParseSchema(SchemaSourceUri uri, XElement root, IEnumerable<SchemaSourceUri> imports)
+	private ISchema ParseSchema(SchemaSourceUri uri, XElement root)
 	{
-		Schema schema = new(schema => ParseDataTypes(root, schema), schema => ParseMetadatas(root, schema))
+		IEnumerable<(SchemaSourceUri Uri, string Alias)> imports = root
+			.Elements(_importElementName)
+			.Select(e =>
+			{
+				SchemaSourceUri import = new(e.Attribute(_uriAttributeName)!.Value);
+				return (import, e.Attribute(_aliasAttributeName)?.Value ?? CompilationContext.GetSchema(import).Name);
+			})
+			.ToArray();
+		
+		Schema schema = new(imports.ToDictionary(import => import.Alias, import => CompilationContext.GetSchema(import.Uri)), schema => ParseDataTypes(root, schema), schema => ParseMetadatas(root, schema))
 		{
 			Uri = uri,
 			Name = GetName(root),
 			Namespace = GetNamespace(root),
-			Imports = imports.Select(import => CompilationContext.GetSchema(import)).ToHashSet(),
 		};
 
 		foreach (var type in schema.DataTypes.OfType<ICompositeDataType>().Select(x => (ISetupDependenciesSource)x))

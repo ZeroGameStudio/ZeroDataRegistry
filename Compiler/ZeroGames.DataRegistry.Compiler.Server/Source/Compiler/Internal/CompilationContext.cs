@@ -11,19 +11,11 @@ internal class CompilationContext : ICompilationContext
 	public ISchema GetSchema(SchemaSourceUri uri)
 		=> _schemaMap[uri];
 
-	public ISchema GetSchema(string name)
-		=> _schemaLookup[name];
-
 	public void RegisterPrimitiveDataType(IPrimitiveDataType type)
-	{
-		_primitiveMap[type.Name] = type;
-	}
+		=> _primitiveMap[type.Name] = type;
 
 	public void RegisterSchema(SchemaSourceUri uri, ISchema schema)
-	{
-		_schemaMap[uri] = schema;
-		_schemaLookup[schema.Name] = schema;
-	}
+		=> _schemaMap[uri] = schema;
 
 	public VoidDataType VoidDataType { get; } = new();
 	
@@ -33,9 +25,7 @@ internal class CompilationContext : ICompilationContext
 	public required IGenericContainerDataType GenericOptionalType { get; init; }
 
 	private readonly Dictionary<string, IPrimitiveDataType> _primitiveMap = new();
-	
 	private readonly Dictionary<SchemaSourceUri, ISchema> _schemaMap = new();
-	private readonly Dictionary<string, ISchema> _schemaLookup = new();
 
 }
 

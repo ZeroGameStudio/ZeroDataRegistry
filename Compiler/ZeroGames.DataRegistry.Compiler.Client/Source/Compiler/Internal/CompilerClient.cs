@@ -12,7 +12,14 @@ namespace ZeroGames.DataRegistry.Compiler.Client;
 internal sealed class CompilerClient
 {
 
-	public CompilerClient(string sources, string outputDir, string configOverride, Action<object> logger)
+	public enum ELogLevel : uint8
+	{
+		Log = 0,
+		Warning = 1,
+		Error = 2,
+	}
+
+	public CompilerClient(string sources, string outputDir, string configOverride, Action<ELogLevel, object> logger)
 	{
 		_sources = sources.Split(';').Select(source => new SchemaSourceUri(source)).ToHashSet();
 		_outputDir = outputDir;
@@ -131,7 +138,14 @@ internal sealed class CompilerClient
 			ICompiler server = CreateServer();
 			await foreach (var result in server.CompileAsync(_sources))
 			{
-				_logger($"[{result.ErrorLevel}] {result.Properties["Uri"]} - {result.Message}");
+				ELogLevel logLevel = result.ErrorLevel switch
+				{
+					ECompilationErrorLevel.Success or ECompilationErrorLevel.Info => ELogLevel.Log,
+					ECompilationErrorLevel.Warning => ELogLevel.Warning,
+					ECompilationErrorLevel.Error => ELogLevel.Error,
+					_ => ELogLevel.Log,
+				};
+				_logger(logLevel, $"{result.Properties["Uri"]} - {result.Message}");
 				if (result.ErrorLevel > ECompilationErrorLevel.Warning)
 				{
 					success = false;
@@ -139,16 +153,23 @@ internal sealed class CompilerClient
 				}
 				
 				Stream dest = result.Dest;
-				string outputPath = $"{_outputDir}/{result.Properties["Name"]}.cs";
+				string outputDir = $"{_outputDir}/{result.Properties["Schema"]}";
+				if (!Directory.Exists(outputDir))
+				{
+					Directory.CreateDirectory(outputDir);
+				}
+				
+				string outputPath = $"{outputDir}/{result.Properties["Name"]}.cs";
 				await using FileStream fs = File.OpenWrite(outputPath);
 				await dest.CopyToAsync(fs);
+				_logger(ELogLevel.Log, $"File generated: {outputPath}");
 			}
 
 			return success;
 		}
 		catch (Exception ex)
 		{
-			_logger(ex);
+			_logger(ELogLevel.Error, ex);
 			return false;
 		}
 	}
@@ -156,7 +177,7 @@ internal sealed class CompilerClient
 	private readonly IReadOnlySet<SchemaSourceUri> _sources;
 	private readonly string _outputDir;
 	private readonly string _configOverride;
-	private readonly Action<object> _logger;
+	private readonly Action<ELogLevel, object> _logger;
 
 	private readonly CompilerClientConfig _config;
 

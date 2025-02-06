@@ -46,13 +46,18 @@ public partial class XmlCompilerFrontend
 	private IEntityDataType ParseEntity(XElement entityElement, ISchema schema)
 	{
 		IReadOnlyList<IProperty> properties = ParseProperties(entityElement, schema);
-		IReadOnlyList<IProperty> primaryKey = properties.Where(property => property.Role == EPropertyRole.PrimaryKey).ToArray();
+		IReadOnlyList<IProperty> primaryKeyComponents = properties.Where(property => property.Role == EPropertyRole.PrimaryKey).ToArray();
+		if (primaryKeyComponents.Count > 7)
+		{
+			throw new NotSupportedException("Primary key more than 7-dimension is not supported.");
+		}
+		
 		return new EntityDataType
 		{
 			Schema = schema,
 			Name = GetName(entityElement),
 			Namespace = GetNamespace(entityElement),
-			PrimaryKey = primaryKey,
+			PrimaryKeyComponents = primaryKeyComponents,
 			BaseTypeFactory = ParseBaseType<IEntityDataType>(entityElement, schema),
 			Properties = properties,
 			Metadatas = ParseMetadatas(entityElement, schema),
@@ -74,16 +79,13 @@ public partial class XmlCompilerFrontend
 
 	private Func<T?> ParseBaseType<T>(XElement compositeTypeElement, ISchema typeSchema) where T : class, ICompositeDataType
 	{
-		string? path = compositeTypeElement.Attribute(_extendsAttributeName)?.Value;
-		if (string.IsNullOrWhiteSpace(path))
+		string? baseTypeName = compositeTypeElement.Attribute(_extendsAttributeName)?.Value;
+		if (string.IsNullOrWhiteSpace(baseTypeName))
 		{
 			return () => null;
 		}
 
-		string[] nodes = path.Split('.');
-		ISchema schema = nodes.Length == 2 ? CompilationContext.GetSchema(nodes[0]) : typeSchema;
-		string typeName = nodes.Last();
-		return () => schema.DataTypes.OfType<T>().Single(type => type.Name == typeName);
+		return () => typeSchema.DataTypes.OfType<T>().Single(type => type.Name == baseTypeName);
 	}
 
 	private IEnumDataType ParseEnum(XElement enumElement, ISchema schema)

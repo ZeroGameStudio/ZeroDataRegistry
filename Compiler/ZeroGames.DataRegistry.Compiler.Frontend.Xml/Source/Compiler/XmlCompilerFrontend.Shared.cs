@@ -66,7 +66,7 @@ public partial class XmlCompilerFrontend
 		return _namespaceRegex.IsMatch(identifier);
 	}
 
-	private static readonly XName _registryElementName = "Registry";
+	private static readonly XName _schemaElementName = "Schema";
 	private static readonly XName _importElementName = "Import";
 	private static readonly XName _metadataElementName = "Metadata";
 	private static readonly XName _entityElementName = "Entity";
@@ -77,14 +77,15 @@ public partial class XmlCompilerFrontend
 	private static readonly XName _propertyElementName = "Property";
 	private static readonly XName _enumElementElementName = "Element";
 
-	private static readonly XName _uriAttributeName = "uri";
-	private static readonly XName _nameAttributeName = "name";
-	private static readonly XName _namespaceAttributeName = "namespace";
-	private static readonly XName _typeAttributeName = "type";
-	private static readonly XName _extendsAttributeName = "extends";
-	private static readonly XName _keyAttributeName = "key";
-	private static readonly XName _valueAttributeName = "value";
-	private static readonly XName _defaultAttributeName = "default";
+	private static readonly XName _uriAttributeName = "Uri";
+	private static readonly XName _aliasAttributeName = "Alias";
+	private static readonly XName _nameAttributeName = "Name";
+	private static readonly XName _namespaceAttributeName = "Namespace";
+	private static readonly XName _typeAttributeName = "Type";
+	private static readonly XName _extendsAttributeName = "Extends";
+	private static readonly XName _keyAttributeName = "Key";
+	private static readonly XName _valueAttributeName = "Value";
+	private static readonly XName _defaultAttributeName = "Default";
 
 	[GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$")]
 	private static partial Regex _identifierRegex { get; }

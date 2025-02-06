@@ -6,8 +6,7 @@ public interface ICompilationContext
 {
 	IPrimitiveDataType GetPrimitiveDataType(string name);
 	ISchema GetSchema(SchemaSourceUri uri);
-	ISchema GetSchema(string name);
-	
+
 	VoidDataType VoidDataType { get; }
 	
 	IGenericContainerDataType GenericListType { get; }

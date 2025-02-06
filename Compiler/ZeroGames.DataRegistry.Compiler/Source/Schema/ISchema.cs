@@ -5,7 +5,7 @@ namespace ZeroGames.DataRegistry.Compiler;
 public interface ISchema : ISchemaElement, INamespaceProvider
 {
 	SchemaSourceUri Uri { get; }
-	IReadOnlySet<ISchema> Imports { get; }
+	IReadOnlyDictionary<string, ISchema> ImportMap { get; }
 	IReadOnlyList<IUserDefinedDataType> DataTypes { get; }
 }
 

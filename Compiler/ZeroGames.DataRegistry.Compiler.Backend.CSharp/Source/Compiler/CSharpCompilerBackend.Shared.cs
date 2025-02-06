@@ -47,6 +47,9 @@ public partial class CSharpCompilerBackend
 		string remaining = sub.Substring(super.Length);
 		return remaining.StartsWith('.');
 	}
+
+	private static bool HasEntity(ISchema schema)
+		=> schema.DataTypes.Count(type => type is IEntityDataType) > 0;
 	
 	private static string Indent(string text)
 		=> text.Insert(0, "\t").Replace(Environment.NewLine, Environment.NewLine + '\t');
@@ -61,6 +64,9 @@ public partial class CSharpCompilerBackend
 
 		return provider.Namespace;
 	}
+	
+	private string GetTypePrimaryKeyTypeCode(IEntityDataType type)
+		=> type.BaseType is {} baseType ? GetTypePrimaryKeyTypeCode(baseType) : type.PrimaryKeyComponents.Count == 1 ? type.PrimaryKeyComponents[0].Type.Name : $"({string.Join(", ", type.PrimaryKeyComponents.Select(key => key.Type.Name))})";
 	
 	private string GetNamespaceCode(INamespaceProvider provider)
 	{

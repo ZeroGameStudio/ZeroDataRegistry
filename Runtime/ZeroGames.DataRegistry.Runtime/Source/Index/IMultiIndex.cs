@@ -2,7 +2,7 @@
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-public interface IMultiIndex<in TKey, TEntity> : IRegistryElement
+public interface IMultiIndex<in TKey, TEntity> : IIndex
 	where TKey : notnull
 	where TEntity : class, IEntity
 {

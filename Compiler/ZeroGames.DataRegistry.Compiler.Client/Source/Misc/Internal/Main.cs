@@ -50,7 +50,25 @@ if (string.IsNullOrWhiteSpace(outputDir))
 	throw new ArgumentOutOfRangeException(nameof(outputDir));
 }
 
-Action<object> logger = Console.WriteLine;
+Action<CompilerClient.ELogLevel, object> logger = (logLevel, message) =>
+{
+	if (logLevel > CompilerClient.ELogLevel.Log)
+	{
+		Console.ForegroundColor = logLevel switch
+		{
+			CompilerClient.ELogLevel.Warning => ConsoleColor.Yellow,
+			CompilerClient.ELogLevel.Error => ConsoleColor.Red,
+			_ => ConsoleColor.White,
+		};
+	}
+	
+	Console.WriteLine($"[{DateTime.Now}] [{logLevel}] {message}");
+	
+	if (logLevel > CompilerClient.ELogLevel.Log)
+	{
+		Console.ResetColor();
+	}
+};
 
 return new CompilerClient(sources, outputDir, configOverride, logger).Compile() ? 0 : -1;
 

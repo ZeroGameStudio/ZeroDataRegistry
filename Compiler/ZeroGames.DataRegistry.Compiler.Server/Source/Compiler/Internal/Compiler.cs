@@ -94,25 +94,23 @@ internal class Compiler : ICompiler
 	{
 		Dictionary<SchemaSourceUri, CompilationUnit> compilationMap = new();
 
-		async Task<CompilationUnit?> LoadCompilationUnit(SchemaSourceUri uri)
+		async Task<CompilationUnit> LoadCompilationUnit(SchemaSourceUri uri)
 		{
-			if (compilationMap.ContainsKey(uri))
+			if (compilationMap.TryGetValue(uri, out var unit))
 			{
-				return null;
+				return unit;
 			}
 			
 			SchemaSourceResolveResult result = _options.SchemaSourceResolver.Resolve(uri);
-			CompilationUnit unit = new(uri, result.Source, result.Form);
+			unit = new(uri, result.Source, result.Form);
 			compilationMap[uri] = unit;
 			
 			List<CompilationUnit>? dependencies = null;
 			foreach (var usingUri in await _options.Frontend[result.Form].GetImportsAsync(result.Source))
 			{
-				if (await LoadCompilationUnit(usingUri) is { } dependency)
-				{
-					dependencies ??= new();
-					dependencies.Add(dependency);
-				}
+				CompilationUnit dependency = await LoadCompilationUnit(usingUri);
+				dependencies ??= new();
+				dependencies.Add(dependency);
 			}
 
 			if (dependencies is not null)
@@ -157,31 +155,6 @@ internal class Compiler : ICompiler
 			}
 		}
 	}
-
-	// private ICompilerFrontend GetFrontend(SchemaSourceForm form)
-	// {
-	// 	if (!_frontendMap.TryGetValue(form, out var frontend))
-	// 	{
-	// 		try
-	// 		{
-	// 			Type frontendType = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly())!.Assemblies
-	// 				.SelectMany(asm => asm.GetTypes())
-	// 				.Single(type => type.IsAssignableTo(typeof(ICompilerFrontend)) &&
-	// 				                type.GetCustomAttribute<CompilerFrontendAttribute>() is { } attr &&
-	// 				                attr.SupportedForm == form);
-	// 			frontend = (ICompilerFrontend)Activator.CreateInstance(frontendType)!;
-	// 		}
-	// 		catch (Exception ex)
-	// 		{
-	// 			throw new CompilationException($"Compiler frontend for form {form.Name} not found.", ex);
-	// 		}
-	//
-	// 		_frontendMap[form] = frontend;
-	// 	}
-	//
-	// 	return frontend;
-	
-	// }
 
 	private readonly CompilerOptions _options;
 

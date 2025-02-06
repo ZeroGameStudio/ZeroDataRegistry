@@ -7,4 +7,9 @@ public interface IEntity
 	
 }
 
+public interface IEntity<out TPrimaryKey> : IEntity
+{
+	public TPrimaryKey PrimaryKey { get; }
+}
+
 
