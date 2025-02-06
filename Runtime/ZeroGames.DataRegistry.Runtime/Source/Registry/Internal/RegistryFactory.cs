@@ -5,78 +5,119 @@ using System.Xml.Linq;
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-public class RegistryFactory<T> : IRegistryFactory<T> where T : class, IRegistry, new()
+public class RegistryFactory : IRegistryFactory
 {
 	
-	public T Create(IXDocumentProvider sourceProvider, IEnumerable<IRegistry> imports)
+	public T Create<T>(IXDocumentProvider sourceProvider, IEnumerable<IRegistry> imports) where T : class, IRegistry
 	{
 		XDocument document = sourceProvider.Document;
 		Dictionary<string, IRegistry> importMap = imports.ToDictionary(import => import.Name);
 
-		T registry = new();
-		var notifyInitialization = registry as INotifyInitialization;
-		notifyInitialization?.PreInitialize();
+		var registry = Activator.CreateInstance<T>();
+		(registry as INotifyInitialization)?.PreInitialize();
 
-		foreach (var importProperty in _metadata.Imports)
-		{
-			Type propertyType = importProperty.PropertyType;
-			string name = propertyType.Name;
-			if (!importMap.TryGetValue(name, out var import))
+		GetRegistryMetadata(typeof(T), out var metadata);
+		
+		{ // Stage I: Fill import registries
+			foreach (var importProperty in metadata.Imports)
 			{
-				throw new KeyNotFoundException($"Import registry '{name}' not found.");
-			}
+				Type propertyType = importProperty.PropertyType;
+				string name = propertyType.Name;
+				if (!importMap.TryGetValue(name, out var import))
+				{
+					throw new KeyNotFoundException($"Import registry '{name}' not found.");
+				}
 
-			if (!import.GetType().IsAssignableTo(propertyType))
-			{
-				throw new ArgumentException($"Import registry '{name}' is not assignable to property with type '{propertyType}'.");
-			}
+				if (!import.GetType().IsAssignableTo(propertyType))
+				{
+					throw new ArgumentException($"Import registry '{name}' is not assignable to property with type '{propertyType}'.");
+				}
 			
-			importProperty.SetValue(registry, import);
+				importProperty.SetValue(registry, import);
+			}
 		}
-
+		
 		RepositoryFactory factory = new()
 		{
-			SerializerMap = new Dictionary<Type, Func<XElement, object>>(),
+			PrimitiveSerializerMap = new Dictionary<Type, Func<XElement, object>>(),
 		};
-		List<Action<Func<Type, object, object>>> finishInitializations = [];
-		foreach (var repositoryProperty in _metadata.Repositories)
-		{
-			Type propertyType = repositoryProperty.PropertyType;
-			Type[] propertyTypeParameters = propertyType.GetInterfaces().Append(propertyType).First(interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRepository<,>)).GetGenericArguments();
-			Type entityType = propertyTypeParameters[1];
-			XElement? root = document.Root?.Element($"{entityType.Name}Repository");
-			if (root is null)
+		int32 count = metadata.Repositories.Count;
+		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[count];
+		Dictionary<Type, IInitializingRepository> repositoryByEntityType = [];
+		
+		{ // Stage II: Allocate all repositories first but not initialize here (only primary key is available on entities).
+			int32 i = 0;
+			foreach (var repositoryProperty in metadata.Repositories)
 			{
-				throw new InvalidOperationException();
+				Type propertyType = repositoryProperty.PropertyType;
+				Type[] propertyTypeParameters = propertyType.GetGenericInstanceOf(typeof(IRepository<,>))!.GetGenericArguments();
+				Type entityType = propertyTypeParameters[1];
+				XElement? root = document.Root?.Element($"{entityType.Name}Repository");
+				if (root is null)
+				{
+					throw new InvalidOperationException();
+				}
+			
+				IInitializingRepository repository = factory.Create(registry, entityType, root, out var finishInitialization);
+				if (!repository.GetType().IsAssignableTo(propertyType))
+				{
+					throw new InvalidOperationException();
+				}
+			
+				repositoryProperty.SetValue(registry, repository);
+
+				finishInitializations[i++] = finishInitialization;
+				repositoryByEntityType[repository.EntityType] = repository;
 			}
-			
-			object repository = factory.Create(registry, entityType, root, out var finishInitialization);
-			if (!repository.GetType().IsAssignableTo(propertyType))
-			{
-				throw new InvalidOperationException();
-			}
-			
-			repositoryProperty.SetValue(registry, repository);
-			
-			finishInitializations.Add(finishInitialization);
 		}
 
-		Func<Type, object, object> getEntity = (type, primaryKey) =>
-		{
-			throw new NotImplementedException();
-		};
-		
-		foreach (var finishInitialization in finishInitializations)
-		{
-			finishInitialization(getEntity);
+		{ // Stage III: Merge entities in inherited repository into base repository.
+			foreach (var repository in repositoryByEntityType
+				.Select(pair => pair.Value)
+				.Where(repo => repo.EntityType.BaseType is {} baseType && baseType != typeof(object))
+				.OrderByDescending(repo =>
+				{
+				    int32 depth = 0;
+				    for (Type? baseType = repo.EntityType.BaseType; baseType is {} b && b != typeof(object); baseType = baseType.BaseType) ++depth;
+				    return depth;
+				}))
+			{
+				IInitializingRepository baseRepository = repositoryByEntityType[repository.EntityType.BaseType!];
+				foreach (var entity in repository.Entities)
+				{
+					baseRepository.RegisterEntity(entity);
+				}
+			}
 		}
 
-		foreach (var autoIndex in _metadata.AutoIndices)
-		{
-			throw new NotImplementedException();
+		{ // Stage IV: Now all entities are in right place, and we can initialize them: Fill data, fixup references, etc.
+			RepositoryFactory.GetElementTypeDelegate getElementType = (rootType, objectElement) =>
+			{
+				Type rootTypeSchema = rootType.GetCustomAttribute<SchemaAttribute>()!.Schema;
+				string typeName = objectElement.Name.ToString();
+				return rootTypeSchema.GetCustomAttribute<DataTypesAttribute>()![typeName];
+			};
+			
+			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey) =>
+			{
+				repositoryByEntityType[type].TryGetEntity(primaryKey, out var entity);
+				return entity;
+			};
+		
+			foreach (var finishInitialization in finishInitializations)
+			{
+				finishInitialization(getElementType, getEntity);
+			}
+		}
+
+		{ // Stage V: Build indices.
+			foreach (var autoIndex in metadata.AutoIndices)
+			{
+				throw new NotImplementedException();
+			}
 		}
 		
-		notifyInitialization?.PostInitialize();
+		(registry as INotifyInitialization)?.PostInitialize();
 		return registry;
 	}
 
@@ -87,60 +128,78 @@ public class RegistryFactory<T> : IRegistryFactory<T> where T : class, IRegistry
 		public required IReadOnlyList<PropertyInfo> AutoIndices { get; init; }
 	}
 
-	static RegistryFactory()
+	private static void GetRegistryMetadata(Type registryType, out RegistryMetadata metadata)
 	{
-		Type registryType = typeof(T);
-
-		List<PropertyInfo> imports = [];
-		List<PropertyInfo> repositories = [];
-		List<PropertyInfo> autoIndices = [];
-
-		foreach (var property in registryType.GetProperties())
+		lock (_metadataLock)
 		{
-			Type propertyType = property.PropertyType;
-			if (property.SetMethod is null)
+			if (_metadata.TryGetValue(registryType, out metadata))
 			{
-				throw new InvalidOperationException();
+				return;
 			}
 			
-			if (property.GetCustomAttribute<ImportAttribute>() is not null)
-			{
-				if (!propertyType.IsAssignableTo(typeof(IRegistry)))
-				{
-					throw new InvalidOperationException();
-				}
-				
-				imports.Add(property);
-			}
-			else if (property.GetCustomAttribute<RepositoryAttribute>() is not null)
-			{
-				if (!propertyType.GetInterfaces().Append(propertyType).Any(interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRepository<,>)))
-				{
-					throw new InvalidOperationException();
-				}
-				
-				repositories.Add(property);
-			}
-			else if (property.GetCustomAttribute<AutoIndexAttribute>() is not null)
-			{
-				if (!propertyType.IsAssignableTo(typeof(IIndex)))
-				{
-					throw new InvalidOperationException();
-				}
-				
-				autoIndices.Add(property);
-			}
-		}
+			List<PropertyInfo> imports = [];
+			List<PropertyInfo> repositories = [];
+			List<PropertyInfo> autoIndices = [];
 
-		_metadata = new()
-		{
-			Imports = imports,
-			Repositories = repositories,
-			AutoIndices = autoIndices,
-		};
+			foreach (var property in registryType.GetProperties())
+			{
+				Type propertyType = property.PropertyType;
+				if (property.GetCustomAttribute<ImportAttribute>() is not null)
+				{
+					if (property.SetMethod is null)
+					{
+						throw new InvalidOperationException();
+					}
+					
+					if (!propertyType.IsAssignableTo(typeof(IRegistry)))
+					{
+						throw new InvalidOperationException();
+					}
+				
+					imports.Add(property);
+				}
+				else if (property.GetCustomAttribute<RepositoryAttribute>() is not null)
+				{
+					if (property.SetMethod is null)
+					{
+						throw new InvalidOperationException();
+					}
+					
+					if (!propertyType.GetInterfaces().Append(propertyType).Any(interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRepository<,>)))
+					{
+						throw new InvalidOperationException();
+					}
+				
+					repositories.Add(property);
+				}
+				else if (property.GetCustomAttribute<AutoIndexAttribute>() is not null)
+				{
+					if (property.SetMethod is null)
+					{
+						throw new InvalidOperationException();
+					}
+					
+					if (!propertyType.IsAssignableTo(typeof(IIndex)))
+					{
+						throw new InvalidOperationException();
+					}
+				
+					autoIndices.Add(property);
+				}
+			}
+
+			metadata = new()
+			{
+				Imports = imports,
+				Repositories = repositories,
+				AutoIndices = autoIndices,
+			};
+			_metadata[registryType] = metadata;
+		}
 	}
 
-	private static readonly RegistryMetadata _metadata;
+	private static readonly Dictionary<Type, RegistryMetadata> _metadata = new();
+	private static readonly Lock _metadataLock = new();
 
 }
 

@@ -20,14 +20,15 @@ public partial class CSharpCompilerBackend
 			usings.Add(GetFullNamespace(type));
 		}
 
-		return GetDistinctUsingsCode(usings, schema.Namespace, true);
+		return GetDistinctUsingsCode(usings, schema.Namespace);
 	}
 
 	private string GetRegistryDefinitionCode(ISchema schema)
 	{
 		return
-$@"{GetGeneratedCodeAttributeCode()}
-public partial class {schema.Name} : IRegistry
+$@"{GetSchemaAttributeCode(schema)}
+{GetGeneratedCodeAttributeCode()}
+public partial class {GetSchemaRegistryName(schema)} : IRegistry
 {{
 {Indent(GetRegistryMembersCode(schema))}
 }}";
@@ -47,7 +48,7 @@ public partial class {schema.Name} : IRegistry
 
 	private string GetRegistryImportsCode(ISchema schema)
 		=> string.Join(Environment.NewLine + Environment.NewLine, schema.ImportMap.Where(import => HasEntity(import.Value)).Select(import
-			=> $"[Import]{Environment.NewLine}public required {import.Value.Name} {import.Key} {{ get {{ this.GuardInvariant(); return field; }} init; }}"));
+			=> $"[Import]{Environment.NewLine}public required {GetSchemaRegistryName(import.Value)} {import.Key} {{ get {{ this.GuardInvariant(); return field; }} init; }}"));
 
 	private string GetRegistryRepositoriesCode(ISchema schema)
 		=> string.Join(Environment.NewLine + Environment.NewLine, schema.DataTypes.OfType<IEntityDataType>().Select(type
@@ -58,7 +59,7 @@ public partial class {schema.Name} : IRegistry
 		return
 $@"void IDisposable.Dispose() => IsDisposed = true;
 IRegistry IRegistryElement.Registry => this;
-public string Name => nameof({schema.Name});
+public string Name => nameof({GetSchemaRegistryName(schema)});
 public bool IsDisposed {{ get; private set; }}";
 	}
 
@@ -88,13 +89,14 @@ public bool IsDisposed {{ get; private set; }}";
 				["Type"] = "Registry",
 				["Schema"] = schema.Name,
 				["Uri"] = schema.Uri.Address,
-				["Name"] = schema.Name,
+				["Name"] = GetSchemaRegistryName(schema),
 				["Namespace"] = schema.Namespace,
 				["Language"] = "C#",
 			};
 
 			return new CompilationUnitResult(stream, ECompilationErrorLevel.Success, "Compilation success.", properties);
 		});
+	
 }
 
 

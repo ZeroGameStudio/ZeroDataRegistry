@@ -51,7 +51,7 @@ public partial class CSharpCompilerBackend
 			}
 		}
 
-		return GetDistinctUsingsCode(usings, GetFullNamespace(type), type is not IEnumDataType);
+		return GetDistinctUsingsCode(usings, GetFullNamespace(type));
 	}
 
 	private void LootTypeNamespace(IDataType type, List<string> namespaces)
@@ -89,7 +89,8 @@ public partial class CSharpCompilerBackend
 	private string GetTypeDefinitionCode(IUserDefinedDataType type)
 	{
 		return
-$@"{GetGeneratedCodeAttributeCode()}
+$@"{GetSchemaAttributeCode(type.Schema)}
+{GetGeneratedCodeAttributeCode()}
 public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 {{
 {Indent(GetTypeMembersCode(type))}
@@ -199,6 +200,7 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 
 			return new CompilationUnitResult(stream, ECompilationErrorLevel.Success, "Compilation success.", properties);
 		});
+	
 }
 
 

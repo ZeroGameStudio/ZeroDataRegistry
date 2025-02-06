@@ -1,7 +1,7 @@
 
 
 
-<Schema Name="SharedLib" Namespace="ZeroGames.DataRegistry.Test.Shared">
+<Schema Name="Shared" Namespace="ZeroGames.DataRegistry.Test.Shared">
 
     <Entity Name="Constant">
         <PrimaryKey Type="uint64" Name="Id" />

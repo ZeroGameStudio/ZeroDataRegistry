@@ -2,9 +2,9 @@
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-public interface IRegistryFactory<out T> where T : class, IRegistry, new()
+public interface IRegistryFactory
 {
-	T Create(IXDocumentProvider sourceProvider, IEnumerable<IRegistry> imports);
+	T Create<T>(IXDocumentProvider sourceProvider, IEnumerable<IRegistry> imports) where T : class, IRegistry;
 }
 
 

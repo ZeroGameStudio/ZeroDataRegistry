@@ -1,0 +1,22 @@
+
+
+
+<SharedRegistry>
+    
+    <ConstantRepository>
+        
+        <Constant>
+            <Id>1</Id>
+            <Value>Hahaha</Value>
+        </Constant>
+
+        <Constant>
+            <Id>2</Id>
+            <Value>Xixixi</Value>
+        </Constant>
+        
+    </ConstantRepository>
+    
+</SharedRegistry>
+
+

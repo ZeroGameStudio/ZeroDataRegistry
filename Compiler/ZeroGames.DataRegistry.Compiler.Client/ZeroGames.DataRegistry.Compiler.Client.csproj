@@ -25,15 +25,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Backend.CSharp\ZeroGames.DataRegistry.Compiler.Backend.CSharp.csproj" />
-      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Frontend.Xml\ZeroGames.DataRegistry.Compiler.Frontend.Xml.csproj" />
-      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Server\ZeroGames.DataRegistry.Compiler.Server.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Update="config.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Backend.CSharp\ZeroGames.DataRegistry.Compiler.Backend.CSharp.csproj" />
+      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Frontend.Xml\ZeroGames.DataRegistry.Compiler.Frontend.Xml.csproj" />
+      <ProjectReference Include="..\ZeroGames.DataRegistry.Compiler.Server\ZeroGames.DataRegistry.Compiler.Server.csproj" />
     </ItemGroup>
 
 </Project>

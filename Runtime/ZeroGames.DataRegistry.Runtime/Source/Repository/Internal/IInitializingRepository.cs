@@ -2,9 +2,9 @@
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-internal interface IDynamicRepository
+internal interface IInitializingRepository : IRepository
 {
-	void RegisterEntity(object primaryKey, object entity);
+	void RegisterEntity(IEntity entity);
 }
 
 

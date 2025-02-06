@@ -30,6 +30,15 @@
             <Link>Generated/%(RecursiveDir)%(Filename)%(Extension)</Link>
         </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+        <None Update="mainconfig.xml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="sharedconfig.xml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
     
     <ItemGroup>
       <ProjectReference Include="..\..\Runtime\ZeroGames.DataRegistry.Runtime.Serialization\ZeroGames.DataRegistry.Runtime.Serialization.csproj" />

@@ -23,15 +23,13 @@ public partial class CSharpCompilerBackend : ICompilerBackend
 
 	private Task<CompilationUnitResult>[] SetupCompilations(ISchema schema)
 	{
+		IEnumerable<Task<CompilationUnitResult>> compilations = schema.DataTypes.Select(CompileTypeAsync).Append(CompileSchemaAsync(schema));
 		if (HasEntity(schema))
 		{
-			return schema.DataTypes.Select(CompileTypeAsync).Append(CompileRegistryAsync(schema)).ToArray();
-		}
-		else
-		{
-			return schema.DataTypes.Select(CompileTypeAsync).ToArray();
+			compilations = compilations.Append(CompileRegistryAsync(schema));
 		}
 
+		return compilations.ToArray();
 	}
 
 	private readonly CSharpCompilerBackendOptions _options;

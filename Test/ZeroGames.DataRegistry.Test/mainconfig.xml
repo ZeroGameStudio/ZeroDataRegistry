@@ -1,0 +1,155 @@
+
+
+
+<MainRegistry>
+    
+    <ItemRepository>
+        <Item>
+            <Id>10001</Id>
+            <Name>生命药水</Name>
+            <Uri>10001</Uri>
+            <Desc>回复50点生命值</Desc>
+            <Icons>
+                <Element>
+                    <Icon>
+                        <Id>10001001</Id>
+                    </Icon>
+                </Element>
+                <Element>
+                    <Icon>
+                        <Id>10001002</Id>
+                    </Icon>
+                </Element>
+            </Icons>
+            <Strings>
+                <Element>123</Element>
+                <Element>abc</Element>
+            </Strings>
+            <StringSet>
+                <Element>123</Element>
+                <Element>abc</Element>
+            </StringSet>
+            <AttributeMap>
+                <Element>
+                    <Key>x</Key>
+                    <Value>100</Value>
+                </Element>
+                <Element>
+                    <Key>y</Key>
+                    <Value>200</Value>
+                </Element>
+            </AttributeMap>
+        </Item>
+    </ItemRepository>
+
+    <WeaponRepository>
+        <Weapon>
+            <Id>20001</Id>
+            <Name>长剑</Name>
+            <Uri>20001</Uri>
+            <Desc>攻击力+10</Desc>
+            <Icons>
+                <Element>
+                    <Icon>
+                        <Id>20001001</Id>
+                    </Icon>
+                </Element>
+                <Element>
+                    <Icon>
+                        <Id>20001002</Id>
+                    </Icon>
+                </Element>
+            </Icons>
+            <Strings>
+                <Element>12345</Element>
+                <Element>abcde</Element>
+            </Strings>
+            <StringSet>
+                <Element>12345</Element>
+                <Element>abcde</Element>
+            </StringSet>
+            <AttributeMap>
+                <Element>
+                    <Key>x</Key>
+                    <Value>100</Value>
+                </Element>
+                <Element>
+                    <Key>y</Key>
+                    <Value>200</Value>
+                </Element>
+                <Element>
+                    <Key>z</Key>
+                    <Value>300</Value>
+                </Element>
+            </AttributeMap>
+            <AttachPoint>
+                <Point3D>
+                    <X>100</X>
+                    <Y>200</Y>
+                    <Z>300</Z>
+                </Point3D>
+            </AttachPoint>
+            <DamageType>Phys</DamageType>
+            <Damage>10</Damage>
+        </Weapon>
+    </WeaponRepository>
+
+    <IconRepository>
+        
+        <Icon>
+            <Id>10001001</Id>
+            <Path>/Game/UI/Icons/10001001</Path>
+        </Icon>
+
+        <Icon>
+            <Id>10001002</Id>
+            <Path>/Game/UI/Icons/10001002</Path>
+        </Icon>
+
+        <Icon>
+            <Id>20001001</Id>
+            <Path>/Game/UI/Icons/20001001</Path>
+        </Icon>
+
+        <Icon>
+            <Id>20001002</Id>
+            <Path>/Game/UI/Icons/20001002</Path>
+        </Icon>
+        
+    </IconRepository>
+    
+    <CharacterRepository>
+        
+        <Character>
+            <Id>101</Id>
+            <OwningItems>
+                <Element>
+                    <OwningItem>
+                        <Item>
+                            <Item>
+                                <Id>10001</Id>
+                                <Uri>10001</Uri>
+                            </Item>
+                        </Item>
+                        <Num>10</Num>
+                    </OwningItem>
+                </Element>
+                <Element>
+                    <OwningItem>
+                        <Item>
+                            <Weapon>
+                                <Id>20001</Id>
+                                <Uri>20001</Uri>
+                            </Weapon>
+                        </Item>
+                        <Num>1</Num>
+                    </OwningItem>
+                </Element>
+            </OwningItems>
+        </Character>
+        
+    </CharacterRepository>
+    
+</MainRegistry>
+
+

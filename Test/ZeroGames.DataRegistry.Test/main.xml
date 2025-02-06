@@ -1,23 +1,23 @@
 
 
 
-<Schema Name="MainRegistry" Namespace="ZeroGames.DataRegistry.Test">
+<Schema Name="Main" Namespace="ZeroGames.DataRegistry.Test">
     
     <Import Uri="shared" Alias="Shared" />
-
-    <Entity Name="MyConstant" Namespace="Temp">
-        <PrimaryKey Type="uint64" Name="Id" />
-    </Entity>
 
     <Entity Name="Item" Namespace="System">
         <PrimaryKey Type="uint64" Name="Id" />
         <Property Type="string" Name="Name" />
         <PrimaryKey Type="string" Name="Uri" />
-        <ForeignKey Type="Icon" Name="Icon" />
+        <Property Type="string?" Name="Desc" />
+        <ForeignKey Type="Icon[]" Name="Icons" />
+        <Property Type="string[]" Name="Strings" />
+        <Property Type="string{}" Name="StringSet" />
+        <Property Type="string->int32" Name="AttributeMap" />
     </Entity>
     
     <Entity Name="Weapon" Extends="Item" Namespace="System">
-        <Property Type="Shared.Point3D" Name="AttachPoint" />
+        <Property Type="Shared.Point2D" Name="AttachPoint" />
         <Property Type="Shared.EDamageType" Name="DamageType" />
         <Property Type="double" Name="Damage" />
     </Entity>
@@ -26,5 +26,15 @@
         <PrimaryKey Type="uint64" Name="Id" />
         <Property Type="string" Name="Path" />
     </Entity>
+    
+    <Entity Name="Character">
+        <PrimaryKey Type="uint64" Name="Id" />
+        <Property Type="OwningItem[]" Name="OwningItems" />
+    </Entity>
+    
+    <Struct Name="OwningItem">
+        <ForeignKey Type="Item" Name="Item" />
+        <Property Type="int32" Name="Num" />
+    </Struct>
 
 </Schema>

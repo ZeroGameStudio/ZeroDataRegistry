@@ -24,6 +24,9 @@ public partial class CSharpCompilerBackend
 
 ";
 
+	private static string GetSchemaAttributeCode(ISchema schema)
+		=> $"[Schema(typeof({GetSchemaTypeName(schema)}))]";
+
 	private static string GetGeneratedCodeAttributeCode()
 		=> $"[global::System.CodeDom.Compiler.GeneratedCode(\"ZeroDataRegistryCompiler\", \"{Assembly.GetExecutingAssembly().GetName().Version!.ToString(3)}\")]";
 	
@@ -53,6 +56,9 @@ public partial class CSharpCompilerBackend
 	
 	private static string Indent(string text)
 		=> text.Insert(0, "\t").Replace(Environment.NewLine, Environment.NewLine + '\t');
+
+	private static string GetSchemaTypeName(ISchema schema) => $"{schema.Name}Schema";
+	private static string GetSchemaRegistryName(ISchema schema) => $"{schema.Name}Registry";
 	
 	private string GetFullNamespace(INamespaceProvider provider)
 	{
@@ -74,10 +80,10 @@ public partial class CSharpCompilerBackend
 		return !string.IsNullOrWhiteSpace(@namespace) ? $"namespace {@namespace};" : string.Empty;
 	}
 	
-	private string GetDistinctUsingsCode(IEnumerable<string> usings, string selfNamespace, bool usingRuntimeNamespace)
+	private string GetDistinctUsingsCode(IEnumerable<string> usings, string selfNamespace)
 	{
 		IEnumerable<string> finalUsings = usings
-			.Append(usingRuntimeNamespace ? "ZeroGames.DataRegistry.Runtime" : string.Empty)
+			.Append("ZeroGames.DataRegistry.Runtime")
 			.Distinct()
 			.Where(us => !string.IsNullOrWhiteSpace(us) && !IsSubnamespaceOf(us, selfNamespace) && !_options.ImplicitlyUsings.Contains(us))
 			.Select(us => $"using {us};")

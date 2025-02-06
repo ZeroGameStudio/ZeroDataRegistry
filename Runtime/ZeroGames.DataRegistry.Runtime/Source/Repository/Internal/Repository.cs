@@ -5,20 +5,30 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEntity>, IDynamicRepository
+internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEntity>, IInitializingRepository, INotifyInitialization
 	where TPrimaryKey : notnull
 	where TEntity : class, IEntity<TPrimaryKey>
 {
+	
+	void INotifyInitialization.PreInitialize()
+	{
+		_state = EState.Initializing;
+	}
+
+	void INotifyInitialization.PostInitialize()
+	{
+		_state = EState.Initialized;
+	}
 
 	void IDisposable.Dispose()
 	{
-		IsDisposed = true;
+		_state = EState.Disposed;
 		_storage.Clear();
 	}
 
 	public Dictionary<TPrimaryKey, TEntity>.Enumerator GetEnumerator()
 	{
-		this.GuardInvariant();
+		GuardInvariant();
 		return _storage.GetEnumerator();
 	}
 	IEnumerator<KeyValuePair<TPrimaryKey, TEntity>> IEnumerable<KeyValuePair<TPrimaryKey, TEntity>>.GetEnumerator() => GetEnumerator();
@@ -26,24 +36,44 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 
 	public bool ContainsKey(TPrimaryKey key)
 	{
-		this.GuardInvariant();
+		GuardInvariant();
 		return _storage.ContainsKey(key);
 	}
 
 	public bool TryGetValue(TPrimaryKey key, [MaybeNullWhen(false)] out TEntity value)
 	{
-		this.GuardInvariant();
+		GuardInvariant();
 		return _storage.TryGetValue(key, out value);
 	}
-	
-	void IDynamicRepository.RegisterEntity(object primaryKey, object entity)
-		=> _storage[(TPrimaryKey)primaryKey] = (TEntity)entity;
+
+	void IInitializingRepository.RegisterEntity(IEntity entity)
+	{
+		if (_state != EState.Initializing)
+		{
+			throw new InvalidOperationException("Repository is immutable unless it is initializing.");
+		}
+		
+		var primaryKey = (TPrimaryKey)entity.PrimaryKey;
+		if (_storage.ContainsKey(primaryKey))
+		{
+			throw new InvalidOperationException($"Primary key '{primaryKey}' already exists.");
+		}
+		
+		_storage[primaryKey] = (TEntity)entity;
+	}
+
+	bool IRepository.TryGetEntity(object primaryKey, [NotNullWhen(true)] out object? entity)
+	{
+		bool suc = _storage.TryGetValue((TPrimaryKey)primaryKey, out var typedEntity);
+		entity = suc ? typedEntity : null;
+		return suc;
+	}
 
 	public TEntity this[TPrimaryKey key]
 	{
 		get
 		{
-			this.GuardInvariant();
+			GuardInvariant();
 			return _storage[key];
 		}
 	}
@@ -52,7 +82,7 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 	{
 		get
 		{
-			this.GuardInvariant();
+			GuardInvariant();
 			return _storage.Count;
 		}
 	}
@@ -61,7 +91,7 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 	{
 		get
 		{
-			this.GuardInvariant();
+			GuardInvariant();
 			return _storage.Keys;
 		}
 	}
@@ -70,14 +100,36 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 	{
 		get
 		{
-			this.GuardInvariant();
+			GuardInvariant();
 			return _storage.Values;
 		}
 	}
 
+	IEnumerable<IEntity> IRepository.Entities => _storage.Values;
+	
 	public required IRegistry Registry { get; init; }
 	public required string Name { get; init; }
-	public bool IsDisposed { get; private set; }
+	public bool IsDisposed => _state == EState.Disposed;
+
+	private enum EState : uint8
+	{
+		Uninitialized,
+		Initializing,
+		Initialized,
+		Disposed,
+	}
+
+	private void GuardInvariant()
+	{
+		if (_state < EState.Initialized)
+		{
+			throw new InvalidOperationException("Repository is not fully initialized yet.");
+		}
+		
+		RegistryElementExtensions.GuardInvariant(this);
+	}
+
+	private EState _state = EState.Uninitialized;
 
 	private readonly Dictionary<TPrimaryKey, TEntity> _storage = new();
 	
