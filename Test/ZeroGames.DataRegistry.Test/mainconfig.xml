@@ -10,8 +10,8 @@
             <Uri>10001</Uri>
             <Desc>回复50点生命值</Desc>
             <Icons>
-                <Element><Icon Sep=",">10001001</Icon></Element>
-                <Element><Icon Sep=",">10001002</Icon></Element>
+                <Element><Icon>10001001</Icon></Element>
+                <Element><Icon>10001002</Icon></Element>
             </Icons>
             <Strings>
                 <Element>123</Element>
@@ -33,7 +33,7 @@
             </AttributeMap>
         </Item>
         
-        <Item Extends="10001,10001" ExtendsSep=",">
+        <Item Extends="10001,10001">
             <Id>10002</Id>
             <Name>魔力药水</Name>
             <Uri>10002</Uri>
@@ -48,8 +48,8 @@
             <Uri>20001</Uri>
             <Desc>攻击力+10</Desc>
             <Icons>
-                <Element><Icon Sep=",">20001001</Icon></Element>
-                <Element><Icon Sep=",">20001002</Icon></Element>
+                <Element><Icon>20001001</Icon></Element>
+                <Element><Icon>20001002</Icon></Element>
             </Icons>
             <Strings>
                 <Element>12345</Element>
@@ -116,13 +116,13 @@
             <OwningItems>
                 <Element>
                     <OwningItem>
-                        <Item><Item Sep=",">10001,10001</Item></Item>
+                        <Item><Item>10001,10001</Item></Item>
                         <Num>10</Num>
                     </OwningItem>
                 </Element>
                 <Element>
                     <OwningItem>
-                        <Item><Item Sep=",">20001,20001</Item></Item>
+                        <Item><Item Sep=";">20001;20001</Item></Item>
                         <Num>1</Num>
                     </OwningItem>
                 </Element>

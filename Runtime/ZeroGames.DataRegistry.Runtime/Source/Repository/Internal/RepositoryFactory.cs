@@ -29,7 +29,7 @@ internal class RepositoryFactory
 		
 		(repository as INotifyInitialization)?.PreInitialize();
 
-		List<(XElement Source, object Entity)> pendingInitializedEntities = [];
+		Dictionary<object, XElement> pendingInitializedEntities = [];
 		foreach (var entityElement in repositoryElement.Elements())
 		{
 			if (entityElement.Name != entityType.Name)
@@ -42,22 +42,71 @@ internal class RepositoryFactory
 			{
 				throw new InvalidOperationException();
 			}
+			
+			foreach (var property in metadata.PrimaryKeyComponents)
+			{
+				XElement? propertyElement = entityElement.Element(property.Name);
+				if (propertyElement is null)
+				{
+					throw new InvalidOperationException();
+				}
+				
+				object value = SerializePrimitive(property.PropertyType, propertyElement.Value);
+				property.SetValue(entity, value);
+			}
 
-			MakePrimaryKey(metadata, entityElement, static (property, value, state) => property.SetValue(state, value), entity);
 			repository.RegisterEntity(entity);
-			pendingInitializedEntities.Add((entityElement, entity));
+			pendingInitializedEntities[entity] = entityElement;
 		}
 
 		finishInitialization = (getElementType, getEntity) =>
 		{
-			foreach (var (entityElement, entity) in pendingInitializedEntities)
+			HashSet<object> initializedEntities = [];
+
+			void InitializeEntity(object entity, XElement entityElement)
 			{
+				if (!initializedEntities.Add(entity))
+				{
+					return;
+				}
+				
+				// If entity extends another entity, then the base entity must get initialized first.
+				string? baseEntityReference = entityElement.Attribute(EXTENDS_ATTRIBUTE_NAME)?.Value;
+				object? baseEntity = null;
+				if (!string.IsNullOrWhiteSpace(baseEntityReference))
+				{
+					string[] rawComponents = baseEntityReference.Split(entityElement.Attribute(EXTENDS_SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
+					object primaryKey = MakePrimaryKey(metadata, rawComponents);
+					repository.TryGetEntity(primaryKey, out baseEntity);
+					if (baseEntity is null || baseEntity.GetType() != entityType)
+					{
+						throw new InvalidOperationException();
+					}
+					
+					InitializeEntity(baseEntity, pendingInitializedEntities[baseEntity]);
+				}
+
 				(entity as INotifyInitialization)?.PreInitialize();
 				
 				foreach (var property in metadata.Properties)
 				{
-					XElement propertyElement = GetPropertyElement(property, entityElement);
-					object? value = Serialize(property.PropertyType, propertyElement, getElementType, getEntity);
+					object? value = null;
+					XElement? propertyElement = entityElement.Element(property.Name);
+					if (propertyElement is null)
+					{
+						if (baseEntity is not null)
+						{
+							// IMPORTANT:
+							// Entity will reference the same instance as base entity does if property is reference type.
+							// This can cause visible side effect if we add hot reload support later.
+							value = property.GetValue(baseEntity);
+						}
+					}
+					else
+					{
+						value = Serialize(property.PropertyType, propertyElement, getElementType, getEntity);
+					}
+					
 					if (!property.IsNullable() && value is null)
 					{
 						throw new InvalidOperationException();
@@ -67,6 +116,11 @@ internal class RepositoryFactory
 				}
 				
 				(entity as INotifyInitialization)?.PostInitialize();
+			}
+			
+			foreach (var (entity, entityElement) in pendingInitializedEntities)
+			{
+				InitializeEntity(entity, entityElement);
 			}
 
 			(repository as INotifyInitialization)?.PostInitialize();
@@ -128,27 +182,6 @@ internal class RepositoryFactory
 		}
 	}
 
-	private object MakePrimaryKey(in EntityMetadata metadata, XElement entityElement, Action<PropertyInfo, object, object?>? onComponentSerialized, object? state)
-	{
-		int32 count = metadata.PrimaryKeyComponents.Count;
-		var components = new object[count];
-		int32 i = 0;
-		foreach (var property in metadata.PrimaryKeyComponents)
-		{
-			XElement? propertyElement = entityElement.Element(property.Name);
-			if (propertyElement is null)
-			{
-				throw new InvalidOperationException();
-			}
-				
-			object value = SerializePrimitive(property.PropertyType, propertyElement.Value);
-			onComponentSerialized?.Invoke(property, value, state);
-			components[i++] = value;
-		}
-
-		return components.Length > 1 ? Activator.CreateInstance(metadata.PrimaryKeyType, components)! : components[0];
-	}
-	
 	private object MakePrimaryKey(in EntityMetadata metadata, ReadOnlySpan<string> rawComponents)
 	{
 		int32 count = metadata.PrimaryKeyComponents.Count;
@@ -268,8 +301,8 @@ internal class RepositoryFactory
 			
 			foreach (var property in implementationType.GetProperties().Where(p => p.GetCustomAttribute<PropertyAttribute>() is not null))
 			{
-				XElement innerPropertyElement = GetPropertyElement(property, structElement);
-				object? value = Serialize(property.PropertyType, innerPropertyElement, getElementType, getEntity);
+				XElement? innerPropertyElement = structElement.Element(property.Name);
+				object? value = innerPropertyElement is not null ? Serialize(property.PropertyType, innerPropertyElement, getElementType, getEntity) : null;
 				if (!property.IsNullable() && value is null)
 				{
 					throw new InvalidOperationException();
@@ -285,7 +318,7 @@ internal class RepositoryFactory
 			XElement entityReferenceElement = propertyElement.Elements().Single();
 			Type implementationType = getElementType(type, entityReferenceElement);
 			GetEntityMetadata(implementationType, out var metadata);
-			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? ",");
+			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
 			return getEntity(implementationType, primaryKey);
 		}
@@ -303,9 +336,6 @@ internal class RepositoryFactory
 		return serializer(value);
 	}
 	
-	private XElement GetPropertyElement(PropertyInfo property, XElement targetElement)
-		=> targetElement.Element(property.Name) ?? new(property.Name, property.GetCustomAttribute<PropertyAttribute>()?.Default);
-
 	private const string CONTAINER_ELEMENT_ELEMENT_NAME = "Element";
 	private const string MAP_KEY_ELEMENT_NAME = "Key";
 	private const string MAP_VALUE_ELEMENT_NAME = "Value";
@@ -315,6 +345,8 @@ internal class RepositoryFactory
 	private const string EXTENDS_SEP_ATTRIBUTE_NAME = "ExtendsSep";
 	
 	private const string HASHSET_ADD_METHOD_NAME = "Add";
+
+	private const string DEFAULT_REFERENCE_SEP = ",";
 
 	private static readonly IReadOnlyDictionary<Type, Func<string, object>> _fallbackPrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>
 	{
