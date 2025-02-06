@@ -10,17 +10,17 @@ public partial class XmlCompilerFrontend
 
 	private IReadOnlyList<IProperty> ParseProperties(XElement compositeTypeElement, ISchema schema)
 	{
-		bool requiresPrimaryKey = compositeTypeElement.Name == _entityElementName && compositeTypeElement.Attribute(_extendsAttributeName) is null;
+		bool requiresPrimaryKey = compositeTypeElement.Name == ENTITY_ELEMENT_NAME && compositeTypeElement.Attribute(EXTENDS_ATTRIBUTE_NAME) is null;
 		bool primaryKeyFound = false;
 		List<IProperty> result = new();
 		foreach (var element in compositeTypeElement.Elements())
 		{
-			if (element.Name == _metadataElementName)
+			if (element.Name == METADATA_ELEMENT_NAME)
 			{
 				continue;
 			}
 
-			if (element.Name == _primaryKeyElementName && !requiresPrimaryKey)
+			if (element.Name == PRIMARY_KEY_ELEMENT_NAME && !requiresPrimaryKey)
 			{
 				throw new ParserException();
 			}
@@ -46,22 +46,22 @@ public partial class XmlCompilerFrontend
 			Role = GetPropertyRole(propertyElement),
 			Name = GetName(propertyElement),
 			TypeFactory = ParsePropertyType(propertyElement, schema),
-			DefaultValue = propertyElement.Attribute(_defaultAttributeName)?.Value ?? string.Empty,
+			DefaultValue = propertyElement.Attribute(DEFAULT_ATTRIBUTE_NAME)?.Value ?? string.Empty,
 			Metadatas = ParseMetadatas(propertyElement, schema),
 		};
 	}
 
 	private EPropertyRole GetPropertyRole(XElement propertyElement)
 	{
-		if (propertyElement.Name == _propertyElementName)
+		if (propertyElement.Name == PROPERTY_ELEMENT_NAME)
 		{
 			return EPropertyRole.Default;
 		}
-		else if (propertyElement.Name == _primaryKeyElementName)
+		else if (propertyElement.Name == PRIMARY_KEY_ELEMENT_NAME)
 		{
 			return EPropertyRole.PrimaryKey;
 		}
-		else if (propertyElement.Name == _foreignKeyElementName)
+		else if (propertyElement.Name == FOREIGN_KEY_ELEMENT_NAME)
 		{
 			return EPropertyRole.ForeignKey;
 		}
@@ -73,7 +73,7 @@ public partial class XmlCompilerFrontend
 	
 	private Func<IDataType> ParsePropertyType(XElement propertyElement, ISchema propertySchema)
 	{
-		string? path = propertyElement.Attribute(_typeAttributeName)?.Value;
+		string? path = propertyElement.Attribute(TYPE_ATTRIBUTE_NAME)?.Value;
 		if (string.IsNullOrWhiteSpace(path))
 		{
 			throw new ParserException();
@@ -82,7 +82,7 @@ public partial class XmlCompilerFrontend
 		// List
 		if (path == CompilationContext.GenericListType.Name)
 		{
-			string? valueTypePath = propertyElement.Attribute(_valueAttributeName)?.Value;
+			string? valueTypePath = propertyElement.Attribute(VALUE_ATTRIBUTE_NAME)?.Value;
 			if (string.IsNullOrWhiteSpace(valueTypePath))
 			{
 				throw new ParserException();
@@ -98,7 +98,7 @@ public partial class XmlCompilerFrontend
 		// Set
 		else if (path == CompilationContext.GenericSetType.Name)
 		{
-			string? valueTypePath = propertyElement.Attribute(_valueAttributeName)?.Value;
+			string? valueTypePath = propertyElement.Attribute(VALUE_ATTRIBUTE_NAME)?.Value;
 			if (string.IsNullOrWhiteSpace(valueTypePath))
 			{
 				throw new ParserException();
@@ -114,13 +114,13 @@ public partial class XmlCompilerFrontend
 		// Map
 		else if (path == CompilationContext.GenericMapType.Name)
 		{
-			string? keyTypePath = propertyElement.Attribute(_keyAttributeName)?.Value;
+			string? keyTypePath = propertyElement.Attribute(KEY_ATTRIBUTE_NAME)?.Value;
 			if (string.IsNullOrWhiteSpace(keyTypePath))
 			{
 				throw new ParserException();
 			}
 			
-			string? valueTypePath = propertyElement.Attribute(_valueAttributeName)?.Value;
+			string? valueTypePath = propertyElement.Attribute(VALUE_ATTRIBUTE_NAME)?.Value;
 			if (string.IsNullOrWhiteSpace(valueTypePath))
 			{
 				throw new ParserException();
@@ -143,7 +143,7 @@ public partial class XmlCompilerFrontend
 		// Optional
 		else if (path == CompilationContext.GenericOptionalType.Name)
 		{
-			string? valueTypePath = propertyElement.Attribute(_valueAttributeName)?.Value;
+			string? valueTypePath = propertyElement.Attribute(VALUE_ATTRIBUTE_NAME)?.Value;
 			if (string.IsNullOrWhiteSpace(valueTypePath))
 			{
 				throw new ParserException();
@@ -204,7 +204,7 @@ public partial class XmlCompilerFrontend
 		string typeName = nodes.Last();
 		return () =>
 		{
-			bool foreignKey = propertyElement.Name == _foreignKeyElementName;
+			bool foreignKey = propertyElement.Name == FOREIGN_KEY_ELEMENT_NAME;
 			IDataType type = schema.DataTypes.FirstOrDefault(type => type.Name == typeName) ?? (IDataType)CompilationContext.GetPrimitiveDataType(typeName);
 			if (foreignKey ^ type is IEntityDataType)
 			{

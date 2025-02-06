@@ -11,7 +11,7 @@ public partial class XmlCompilerFrontend
 	
 	private string GetName(XElement element)
 	{
-		string? name = element.Attribute(_nameAttributeName)?.Value;
+		string? name = element.Attribute(NAME_ATTRIBUTE_NAME)?.Value;
 		if (!IsValidIdentifier(name))
 		{
 			throw new ParserException();
@@ -22,7 +22,7 @@ public partial class XmlCompilerFrontend
 	
 	private string GetNamespace(XElement element)
 	{
-		string? name = element.Attribute(_namespaceAttributeName)?.Value;
+		string? name = element.Attribute(NAMESPACE_ATTRIBUTE_NAME)?.Value;
 		if (string.IsNullOrWhiteSpace(name))
 		{
 			return string.Empty;
@@ -66,26 +66,26 @@ public partial class XmlCompilerFrontend
 		return _namespaceRegex.IsMatch(identifier);
 	}
 
-	private static readonly XName _schemaElementName = "Schema";
-	private static readonly XName _importElementName = "Import";
-	private static readonly XName _metadataElementName = "Metadata";
-	private static readonly XName _entityElementName = "Entity";
-	private static readonly XName _structElementName = "Struct";
-	private static readonly XName _enumElementName = "Enum";
-	private static readonly XName _primaryKeyElementName = "PrimaryKey";
-	private static readonly XName _foreignKeyElementName = "ForeignKey";
-	private static readonly XName _propertyElementName = "Property";
-	private static readonly XName _enumElementElementName = "Element";
+	private const string SCHEMA_ELEMENT_NAME = "Schema";
+	private const string IMPORT_ELEMENT_NAME = "Import";
+	private const string METADATA_ELEMENT_NAME = "Metadata";
+	private const string ENTITY_ELEMENT_NAME = "Entity";
+	private const string STRUCT_ELEMENT_NAME = "Struct";
+	private const string ENUM_ELEMENT_NAME = "Enum";
+	private const string PRIMARY_KEY_ELEMENT_NAME = "PrimaryKey";
+	private const string FOREIGN_KEY_ELEMENT_NAME = "ForeignKey";
+	private const string PROPERTY_ELEMENT_NAME = "Property";
+	private const string ENUM_ELEMENT_ELEMENT_NAME = "Element";
 
-	private static readonly XName _uriAttributeName = "Uri";
-	private static readonly XName _aliasAttributeName = "Alias";
-	private static readonly XName _nameAttributeName = "Name";
-	private static readonly XName _namespaceAttributeName = "Namespace";
-	private static readonly XName _typeAttributeName = "Type";
-	private static readonly XName _extendsAttributeName = "Extends";
-	private static readonly XName _keyAttributeName = "Key";
-	private static readonly XName _valueAttributeName = "Value";
-	private static readonly XName _defaultAttributeName = "Default";
+	private const string URI_ATTRIBUTE_NAME = "Uri";
+	private const string ALIAS_ATTRIBUTE_NAME = "Alias";
+	private const string NAME_ATTRIBUTE_NAME = "Name";
+	private const string NAMESPACE_ATTRIBUTE_NAME = "Namespace";
+	private const string TYPE_ATTRIBUTE_NAME = "Type";
+	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
+	private const string KEY_ATTRIBUTE_NAME = "Key";
+	private const string VALUE_ATTRIBUTE_NAME = "Value";
+	private const string DEFAULT_ATTRIBUTE_NAME = "Default";
 
 	[GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$")]
 	private static partial Regex _identifierRegex { get; }

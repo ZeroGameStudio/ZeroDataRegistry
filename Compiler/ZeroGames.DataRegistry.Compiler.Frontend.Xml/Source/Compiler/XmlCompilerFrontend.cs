@@ -18,8 +18,8 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		try
 		{
 			IEnumerable<SchemaSourceUri> result = root
-				.Elements(_importElementName)
-				.Select(e => new SchemaSourceUri(e.Attribute(_uriAttributeName)!.Value))
+				.Elements(IMPORT_ELEMENT_NAME)
+				.Select(e => new SchemaSourceUri(e.Attribute(URI_ATTRIBUTE_NAME)!.Value))
 				.ToArray();
 			
 			return Task.FromResult(result);
@@ -50,7 +50,7 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 		}
 
 		XElement? root = doc.Root;
-		if (root is null || root.Name != _schemaElementName)
+		if (root is null || root.Name != SCHEMA_ELEMENT_NAME)
 		{
 			throw new ParserException();
 		}
@@ -61,11 +61,11 @@ public sealed partial class XmlCompilerFrontend : ICompilerFrontend
 	private ISchema ParseSchema(SchemaSourceUri uri, XElement root)
 	{
 		IEnumerable<(SchemaSourceUri Uri, string Alias)> imports = root
-			.Elements(_importElementName)
+			.Elements(IMPORT_ELEMENT_NAME)
 			.Select(e =>
 			{
-				SchemaSourceUri import = new(e.Attribute(_uriAttributeName)!.Value);
-				return (import, e.Attribute(_aliasAttributeName)?.Value ?? CompilationContext.GetSchema(import).Name);
+				SchemaSourceUri import = new(e.Attribute(URI_ATTRIBUTE_NAME)!.Value);
+				return (import, e.Attribute(ALIAS_ATTRIBUTE_NAME)?.Value ?? CompilationContext.GetSchema(import).Name);
 			})
 			.ToArray();
 		

@@ -12,7 +12,7 @@ public partial class XmlCompilerFrontend
 		List<IUserDefinedDataType> result = new();
 		foreach (var element in schemaElement.Elements())
 		{
-			if (element.Name == _importElementName || element.Name == _metadataElementName)
+			if (element.Name == IMPORT_ELEMENT_NAME || element.Name == METADATA_ELEMENT_NAME)
 			{
 				continue;
 			}
@@ -25,15 +25,15 @@ public partial class XmlCompilerFrontend
 	
 	private IUserDefinedDataType ParseDataType(XElement typeElement, ISchema schema)
 	{
-		if (typeElement.Name == _entityElementName)
+		if (typeElement.Name == ENTITY_ELEMENT_NAME)
 		{
 			return ParseEntity(typeElement, schema);
 		}
-		else if (typeElement.Name == _structElementName)
+		else if (typeElement.Name == STRUCT_ELEMENT_NAME)
 		{
 			return ParseStruct(typeElement, schema);
 		}
-		else if (typeElement.Name == _enumElementName)
+		else if (typeElement.Name == ENUM_ELEMENT_NAME)
 		{
 			return ParseEnum(typeElement, schema);
 		}
@@ -79,7 +79,7 @@ public partial class XmlCompilerFrontend
 
 	private Func<T?> ParseBaseType<T>(XElement compositeTypeElement, ISchema typeSchema) where T : class, ICompositeDataType
 	{
-		string? baseTypeName = compositeTypeElement.Attribute(_extendsAttributeName)?.Value;
+		string? baseTypeName = compositeTypeElement.Attribute(EXTENDS_ATTRIBUTE_NAME)?.Value;
 		if (string.IsNullOrWhiteSpace(baseTypeName))
 		{
 			return () => null;
@@ -90,7 +90,7 @@ public partial class XmlCompilerFrontend
 
 	private IEnumDataType ParseEnum(XElement enumElement, ISchema schema)
 	{
-		string? underlyingTypeName = enumElement.Attribute(_extendsAttributeName)?.Value ?? _options.DefaultEnumUnderlyingTypeName;
+		string? underlyingTypeName = enumElement.Attribute(EXTENDS_ATTRIBUTE_NAME)?.Value ?? _options.DefaultEnumUnderlyingTypeName;
 		if (string.IsNullOrWhiteSpace(underlyingTypeName))
 		{
 			throw new ParserException();
@@ -114,7 +114,7 @@ public partial class XmlCompilerFrontend
 	}
 
 	private IReadOnlyList<IEnumElement> ParseEnumElements(XElement enumTypeElement, ISchema schema, IPrimitiveDataType underlyingType)
-		=> enumTypeElement.Elements(_enumElementElementName).Select(element => ParseEnumElement(element, schema, GetEnumUnderlyingTypeRange(underlyingType))).ToArray();
+		=> enumTypeElement.Elements(ENUM_ELEMENT_ELEMENT_NAME).Select(element => ParseEnumElement(element, schema, GetEnumUnderlyingTypeRange(underlyingType))).ToArray();
 
 	private (Int128, Int128) GetEnumUnderlyingTypeRange(IPrimitiveDataType underlyingType)
 		=> underlyingType.PrimitiveType switch
@@ -143,7 +143,7 @@ public partial class XmlCompilerFrontend
 	
 	private Int128 GetEnumValue(XElement enumElementElement, (Int128 Min, Int128 Max) range)
 	{
-		if (!Int128.TryParse(enumElementElement.Attribute(_valueAttributeName)?.Value, out var value))
+		if (!Int128.TryParse(enumElementElement.Attribute(VALUE_ATTRIBUTE_NAME)?.Value, out var value))
 		{
 			throw new ParserException();
 		}
