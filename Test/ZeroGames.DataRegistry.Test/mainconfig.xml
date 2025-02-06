@@ -10,16 +10,8 @@
             <Uri>10001</Uri>
             <Desc>回复50点生命值</Desc>
             <Icons>
-                <Element>
-                    <Icon>
-                        <Id>10001001</Id>
-                    </Icon>
-                </Element>
-                <Element>
-                    <Icon>
-                        <Id>10001002</Id>
-                    </Icon>
-                </Element>
+                <Element><Icon Sep=",">10001001</Icon></Element>
+                <Element><Icon Sep=",">10001002</Icon></Element>
             </Icons>
             <Strings>
                 <Element>123</Element>
@@ -40,6 +32,13 @@
                 </Element>
             </AttributeMap>
         </Item>
+        
+        <Item Extends="10001,10001" ExtendsSep=",">
+            <Id>10002</Id>
+            <Name>魔力药水</Name>
+            <Uri>10002</Uri>
+            <Desc>回复50点魔力值</Desc>
+        </Item>
     </ItemRepository>
 
     <WeaponRepository>
@@ -49,16 +48,8 @@
             <Uri>20001</Uri>
             <Desc>攻击力+10</Desc>
             <Icons>
-                <Element>
-                    <Icon>
-                        <Id>20001001</Id>
-                    </Icon>
-                </Element>
-                <Element>
-                    <Icon>
-                        <Id>20001002</Id>
-                    </Icon>
-                </Element>
+                <Element><Icon Sep=",">20001001</Icon></Element>
+                <Element><Icon Sep=",">20001002</Icon></Element>
             </Icons>
             <Strings>
                 <Element>12345</Element>
@@ -125,23 +116,13 @@
             <OwningItems>
                 <Element>
                     <OwningItem>
-                        <Item>
-                            <Item>
-                                <Id>10001</Id>
-                                <Uri>10001</Uri>
-                            </Item>
-                        </Item>
+                        <Item><Item Sep=",">10001,10001</Item></Item>
                         <Num>10</Num>
                     </OwningItem>
                 </Element>
                 <Element>
                     <OwningItem>
-                        <Item>
-                            <Weapon>
-                                <Id>20001</Id>
-                                <Uri>20001</Uri>
-                            </Weapon>
-                        </Item>
+                        <Item><Item Sep=",">20001,20001</Item></Item>
                         <Num>1</Num>
                     </OwningItem>
                 </Element>

@@ -75,7 +75,7 @@ internal class RepositoryFactory
 		return repository;
 	}
 	
-	public required IReadOnlyDictionary<Type, Func<XElement, object>> PrimitiveSerializerMap { private get; init; }
+	public required IReadOnlyDictionary<Type, Func<string, object>> PrimitiveSerializerMap { private get; init; }
 	
 	private readonly struct EntityMetadata
 	{
@@ -128,7 +128,7 @@ internal class RepositoryFactory
 		}
 	}
 
-	private object MakePrimaryKey(in EntityMetadata metadata, XElement entityElement, Action<PropertyInfo, object, object?>? onComponentSerialized = null, object? state = null)
+	private object MakePrimaryKey(in EntityMetadata metadata, XElement entityElement, Action<PropertyInfo, object, object?>? onComponentSerialized, object? state)
 	{
 		int32 count = metadata.PrimaryKeyComponents.Count;
 		var components = new object[count];
@@ -141,8 +141,22 @@ internal class RepositoryFactory
 				throw new InvalidOperationException();
 			}
 				
-			object value = SerializePrimitive(property.PropertyType, propertyElement);
+			object value = SerializePrimitive(property.PropertyType, propertyElement.Value);
 			onComponentSerialized?.Invoke(property, value, state);
+			components[i++] = value;
+		}
+
+		return components.Length > 1 ? Activator.CreateInstance(metadata.PrimaryKeyType, components)! : components[0];
+	}
+	
+	private object MakePrimaryKey(in EntityMetadata metadata, ReadOnlySpan<string> rawComponents)
+	{
+		int32 count = metadata.PrimaryKeyComponents.Count;
+		var components = new object[count];
+		int32 i = 0;
+		foreach (var property in metadata.PrimaryKeyComponents)
+		{
+			object value = SerializePrimitive(property.PropertyType, rawComponents[i]);
 			components[i++] = value;
 		}
 
@@ -268,24 +282,25 @@ internal class RepositoryFactory
 		}
 		else if (type.IsAssignableTo(typeof(IEntity)))
 		{
-			XElement entityElement = propertyElement.Elements().Single();
-			Type implementationType = getElementType(type, entityElement);
+			XElement entityReferenceElement = propertyElement.Elements().Single();
+			Type implementationType = getElementType(type, entityReferenceElement);
 			GetEntityMetadata(implementationType, out var metadata);
-			object primaryKey = MakePrimaryKey(metadata, entityElement);
+			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? ",");
+			object primaryKey = MakePrimaryKey(metadata, rawComponents);
 			return getEntity(implementationType, primaryKey);
 		}
 		
-		return SerializePrimitive(type, propertyElement);
+		return SerializePrimitive(type, propertyElement.Value);
 	}
 
-	private object SerializePrimitive(Type type, XElement propertyElement)
+	private object SerializePrimitive(Type type, string value)
 	{
 		if (!PrimitiveSerializerMap.TryGetValue(type, out var serializer))
 		{
 			serializer = _fallbackPrimitiveSerializerMap[type];
 		}
 
-		return serializer(propertyElement);
+		return serializer(value);
 	}
 	
 	private XElement GetPropertyElement(PropertyInfo property, XElement targetElement)
@@ -294,23 +309,27 @@ internal class RepositoryFactory
 	private const string CONTAINER_ELEMENT_ELEMENT_NAME = "Element";
 	private const string MAP_KEY_ELEMENT_NAME = "Key";
 	private const string MAP_VALUE_ELEMENT_NAME = "Value";
+
+	private const string SEP_ATTRIBUTE_NAME = "Sep";
+	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
+	private const string EXTENDS_SEP_ATTRIBUTE_NAME = "ExtendsSep";
 	
 	private const string HASHSET_ADD_METHOD_NAME = "Add";
 
-	private static readonly IReadOnlyDictionary<Type, Func<XElement, object>> _fallbackPrimitiveSerializerMap = new Dictionary<Type, Func<XElement, object>>
+	private static readonly IReadOnlyDictionary<Type, Func<string, object>> _fallbackPrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>
 	{
-		[typeof(uint8)] = element => uint8.Parse(element.Value),
-		[typeof(uint16)] = element => uint16.Parse(element.Value),
-		[typeof(uint32)] = element => uint32.Parse(element.Value),
-		[typeof(uint64)] = element => uint64.Parse(element.Value),
-		[typeof(int8)] = element => int8.Parse(element.Value),
-		[typeof(int16)] = element => int16.Parse(element.Value),
-		[typeof(int32)] = element => int32.Parse(element.Value),
-		[typeof(int64)] = element => int64.Parse(element.Value),
-		[typeof(float)] = element => float.Parse(element.Value),
-		[typeof(double)] = element => double.Parse(element.Value),
-		[typeof(bool)] = element => bool.Parse(element.Value),
-		[typeof(string)] = element => element.Value,
+		[typeof(uint8)] = value => uint8.Parse(value),
+		[typeof(uint16)] = value => uint16.Parse(value),
+		[typeof(uint32)] = value => uint32.Parse(value),
+		[typeof(uint64)] = value => uint64.Parse(value),
+		[typeof(int8)] = value => int8.Parse(value),
+		[typeof(int16)] = value => int16.Parse(value),
+		[typeof(int32)] = value => int32.Parse(value),
+		[typeof(int64)] = value => int64.Parse(value),
+		[typeof(float)] = value => float.Parse(value),
+		[typeof(double)] = value => double.Parse(value),
+		[typeof(bool)] = value => bool.Parse(value),
+		[typeof(string)] = value => value,
 	};
 	
 	private static readonly Dictionary<Type, EntityMetadata> _metadata = new();

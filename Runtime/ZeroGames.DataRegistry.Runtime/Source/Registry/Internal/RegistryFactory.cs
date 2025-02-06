@@ -39,7 +39,7 @@ public class RegistryFactory : IRegistryFactory
 		
 		RepositoryFactory factory = new()
 		{
-			PrimitiveSerializerMap = new Dictionary<Type, Func<XElement, object>>(),
+			PrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>(),
 		};
 		int32 count = metadata.Repositories.Count;
 		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[count];
