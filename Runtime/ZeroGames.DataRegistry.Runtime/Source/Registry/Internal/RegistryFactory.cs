@@ -90,19 +90,6 @@ public class RegistryFactory : IRegistryFactory
 		}
 		
 		{ // Stage IV: Now all entities are in right place, and we can initialize them: Fill data, fixup references, etc.
-			RepositoryFactory.GetElementTypeDelegate getElementType = (rootType, objectElement) =>
-			{
-				Type rootTypeSchema = rootType.GetCustomAttribute<SchemaAttribute>()!.Schema;
-				string typeName = objectElement.Name.ToString();
-				if (typeName == rootType.Name)
-				{
-					return rootType;
-				}
-				
-				Type implementationType = rootTypeSchema.GetCustomAttribute<DataTypesAttribute>()![typeName];
-				return !implementationType.IsAbstract && implementationType.IsAssignableTo(rootType) ? implementationType : throw new InvalidOperationException();
-			};
-			
 			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey, evenIfAbstract) =>
 			{
 				repositoryByEntityType[type].TryGetEntity(primaryKey, evenIfAbstract, out var entity);
@@ -111,7 +98,7 @@ public class RegistryFactory : IRegistryFactory
 		
 			foreach (var finishInitialization in finishInitializations)
 			{
-				finishInitialization(getElementType, getEntity);
+				finishInitialization(getEntity);
 			}
 		}
 

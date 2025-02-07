@@ -9,8 +9,8 @@
             <Uri>1</Uri>
             <Desc/>
             <Icons>
-                <Element><Icon>10001001</Icon></Element>
-                <Element><Icon>10001002</Icon></Element>
+                <Element>10001001</Element>
+                <Element>10001002</Element>
             </Icons>
             <Strings>
                 <Element>123</Element>

@@ -10,19 +10,13 @@ namespace ZeroGames.DataRegistry.Runtime;
 internal class RepositoryFactory
 {
 
-	public delegate Type GetElementTypeDelegate(Type rootType, XElement objectElement);
 	public delegate IEntity? GetEntityDelegate(Type type, object primaryKey, bool evenIfAbstract);
-	public delegate void FinishInitializationDelegate(GetElementTypeDelegate getElementType, GetEntityDelegate getEntity);
+	public delegate void FinishInitializationDelegate(GetEntityDelegate getEntity);
 
 	public IInitializingRepository Create(IRegistry registry, Type entityType, out FinishInitializationDelegate finishInitialization)
 	{
 		IInitializingRepository repository = AllocateRepository(registry, entityType);
-
-		finishInitialization = (_, _) =>
-		{
-			(repository as INotifyInitialization)?.PostInitialize();
-		};
-		
+		finishInitialization = _ => (repository as INotifyInitialization)?.PostInitialize();
 		return repository;
 	}
 	
@@ -62,7 +56,7 @@ internal class RepositoryFactory
 			pendingInitializedEntities[entity] = entityElement;
 		}
 
-		finishInitialization = (getElementType, getEntity) =>
+		finishInitialization = getEntity =>
 		{
 			HashSet<IEntity> initializedEntities = [];
 			Dictionary<IEntity, Dictionary<PropertyInfo, XElement?>> entityPropertyElementLookup = [];
@@ -127,7 +121,7 @@ internal class RepositoryFactory
 							throw new InvalidOperationException();
 						}
 						
-						object? value = Serialize(property.PropertyType, propertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
+						object? value = Serialize(property.PropertyType, propertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getEntity);
 						property.SetValue(entity, value);
 					}
 					
@@ -250,7 +244,7 @@ internal class RepositoryFactory
 		return components.Length > 1 ? Activator.CreateInstance(metadata.PrimaryKeyType, components)! : components[0];
 	}
 
-	private object? Serialize(Type type, XElement propertyElement, ReturnNotNull? returnNotNullIfNotContainer, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
+	private object? Serialize(Type type, XElement propertyElement, ReturnNotNull? returnNotNullIfNotContainer, GetEntityDelegate getEntity)
 	{
 		if (type.GetGenericInstanceOf(typeof(IReadOnlyList<>)) is {} genericListType)
 		{
@@ -264,7 +258,7 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 				
-				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getElementType, getEntity);
+				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getEntity);
 				container.Add(value);
 			}
 
@@ -283,7 +277,7 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 
-				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getElementType, getEntity);
+				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getEntity);
 				addMethod.Invoke(container, [ value ]);
 			}
 
@@ -302,8 +296,8 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 				
-				object key = SerializeNonContainer(keyType, element.Element(MAP_KEY_ELEMENT_NAME)!, ReturnNotNull.True, getElementType, getEntity);
-				object value = SerializeNonContainer(valueType, element.Element(MAP_VALUE_ELEMENT_NAME)!, ReturnNotNull.True, getElementType, getEntity);
+				object key = SerializeNonContainer(keyType, element.Element(MAP_KEY_ELEMENT_NAME)!, ReturnNotNull.True, getEntity);
+				object value = SerializeNonContainer(valueType, element.Element(MAP_VALUE_ELEMENT_NAME)!, ReturnNotNull.True, getEntity);
 				container[key] = value;
 			}
 
@@ -311,14 +305,14 @@ internal class RepositoryFactory
 		}
 		else if (Nullable.GetUnderlyingType(type) is {} underlyingValueType)
 		{
-			return SerializeNonContainer(underlyingValueType, propertyElement, ReturnNotNull.False, getElementType, getEntity);
+			return SerializeNonContainer(underlyingValueType, propertyElement, ReturnNotNull.False, getEntity);
 		}
 
-		return SerializeNonContainer(type, propertyElement, returnNotNullIfNotContainer, getElementType, getEntity);
+		return SerializeNonContainer(type, propertyElement, returnNotNullIfNotContainer, getEntity);
 	}
 
 	[return: NotNullIfNotNull(nameof(returnNotNull))]
-	private object? SerializeNonContainer(Type type, XElement propertyElement, ReturnNotNull? returnNotNull, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
+	private object? SerializeNonContainer(Type type, XElement propertyElement, ReturnNotNull? returnNotNull, GetEntityDelegate getEntity)
 	{
 		bool notnull = returnNotNull is not null;
 		bool empty = string.IsNullOrEmpty(propertyElement.Value);
@@ -339,7 +333,7 @@ internal class RepositoryFactory
 			}
 			
 			XElement structElement = propertyElement.Elements().Single();
-			Type implementationType = getElementType(type, structElement);
+			Type implementationType = SchemaHelper.GetImplementationType(type, structElement.Name.ToString());
 			object? instance = Activator.CreateInstance(implementationType);
 			if (instance is null)
 			{
@@ -355,7 +349,7 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 				
-				object? value = Serialize(propertyType, innerPropertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
+				object? value = Serialize(propertyType, innerPropertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getEntity);
 				property.SetValue(instance, value);
 			}
 			
@@ -368,10 +362,10 @@ internal class RepositoryFactory
 				return notnull ? throw new InvalidOperationException() : null;
 			}
 			
-			XElement entityReferenceElement = propertyElement.Elements().Single();
-			Type implementationType = getElementType(type, entityReferenceElement);
+			XElement? entityReferenceElement = propertyElement.Elements().SingleOrDefault();
+			Type implementationType = entityReferenceElement is not null ? SchemaHelper.GetImplementationType(type, entityReferenceElement.Name.ToString()) : type;
 			GetEntityMetadata(implementationType, out var metadata);
-			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
+			string[] rawComponents = (entityReferenceElement ?? propertyElement).Value.Split(entityReferenceElement?.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
 			IEntity? entity = getEntity(implementationType, primaryKey, false);
 			if (notnull && entity is null)
