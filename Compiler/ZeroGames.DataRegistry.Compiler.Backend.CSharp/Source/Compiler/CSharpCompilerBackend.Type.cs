@@ -105,7 +105,8 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 				? entityType.PrimaryKeyComponents[0].Name
 				: $"({string.Join(", ", entityType.PrimaryKeyComponents.Select(component => component.Name))})";
 			string primaryKeyImplementation = $"public {GetTypePrimaryKeyTypeCode(entityType)} PrimaryKey => {primaryKeyValueCode};";
-			return string.Join(Environment.NewLine + Environment.NewLine, primaryKeyImplementation, GetTypePropertiesCode(entityType));
+			string isAbstractImplementation = $"private bool IsAbstract {{ get; set; }}{Environment.NewLine}bool IEntity.IsAbstract => IsAbstract;";
+			return string.Join(Environment.NewLine + Environment.NewLine, primaryKeyImplementation, GetTypePropertiesCode(entityType), isAbstractImplementation);
 		}
 		else if (type is ICompositeDataType compositeType)
 		{

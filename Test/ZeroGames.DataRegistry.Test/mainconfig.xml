@@ -4,11 +4,10 @@
 <MainRegistry>
     
     <ItemRepository>
-        <Item>
-            <Id>10001</Id>
-            <Name/>
-            <Uri>10001</Uri>
-            <Desc></Desc>
+        <Item Abstract="true">
+            <Id>1</Id>
+            <Uri>1</Uri>
+            <Desc/>
             <Icons>
                 <Element><Icon>10001001</Icon></Element>
                 <Element><Icon>10001002</Icon></Element>
@@ -32,6 +31,12 @@
                 </Element>
             </AttributeMap>
             <Icon><Icon>10001001</Icon></Icon>
+        </Item>
+        
+        <Item Extends="1,1">
+            <Id>10001</Id>
+            <Name>生命药水</Name>
+            <Uri>10001</Uri>
         </Item>
         
         <Item Extends="10001,10001">

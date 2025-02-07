@@ -30,7 +30,7 @@ internal class RepositoryFactory
 		
 		(repository as INotifyInitialization)?.PreInitialize();
 
-		Dictionary<object, XElement> pendingInitializedEntities = [];
+		Dictionary<IEntity, XElement> pendingInitializedEntities = [];
 		foreach (var entityElement in repositoryElement.Elements())
 		{
 			if (entityElement.Name != entityType.Name)
@@ -62,19 +62,19 @@ internal class RepositoryFactory
 
 		finishInitialization = (getElementType, getEntity) =>
 		{
-			HashSet<object> initializedEntities = [];
-			Dictionary<object, Dictionary<PropertyInfo, XElement>> entityPropertyElementLookup = [];
+			HashSet<IEntity> initializedEntities = [];
+			Dictionary<IEntity, Dictionary<PropertyInfo, XElement?>> entityPropertyElementLookup = [];
 
-			void InitializeEntity(object entity, XElement entityElement)
+			void InitializeEntity(IEntity entity, XElement entityElement)
 			{
 				if (!initializedEntities.Add(entity))
 				{
 					return;
 				}
 				
-				// If entity extends another entity, then the base entity must get initialized first.
+				// If entity extends another entity, then the base entity must get initialized first (recursively).
 				string? baseEntityReference = entityElement.Attribute(EXTENDS_ATTRIBUTE_NAME)?.Value;
-				object? baseEntity = null;
+				IEntity? baseEntity = null;
 				if (!string.IsNullOrWhiteSpace(baseEntityReference))
 				{
 					string[] rawComponents = baseEntityReference.Split(entityElement.Attribute(EXTENDS_SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
@@ -88,23 +88,51 @@ internal class RepositoryFactory
 					InitializeEntity(baseEntity, pendingInitializedEntities[baseEntity]);
 				}
 
-				(entity as INotifyInitialization)?.PreInitialize();
+				// Now all base entities on the inheritance chain is initialized so we can initialize this entity.
+				bool @abstract = entityElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is { } abstractAttr && bool.Parse(abstractAttr.Value);
+				if (@abstract)
+				{
+					entityType.GetProperty(nameof(IEntity.IsAbstract), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(entity, true);
+				}
+
+				if (!@abstract)
+				{
+					(entity as INotifyInitialization)?.PreInitialize();
+				}
 				
 				foreach (var property in metadata.Properties)
 				{
 					XElement? propertyElement = entityElement.Element(property.Name);
 					if (propertyElement is null)
 					{
-						if (baseEntity is null)
+						if (!@abstract && baseEntity is null)
 						{
 							throw new InvalidOperationException();
 						}
 
-						propertyElement = entityPropertyElementLookup[baseEntity][property];
+						if (baseEntity is not null)
+						{
+							try
+							{
+								propertyElement = entityPropertyElementLookup[baseEntity][property];
+							}
+							catch (KeyNotFoundException ex)
+							{
+								throw new InvalidOperationException($"Recursive inheritance detected on entity '{entity.PrimaryKey}'", ex);
+							}
+						}
 					}
-					
-					object? value = Serialize(property.PropertyType, propertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
-					property.SetValue(entity, value);
+
+					if (!@abstract)
+					{
+						if (propertyElement is null)
+						{
+							throw new InvalidOperationException();
+						}
+						
+						object? value = Serialize(property.PropertyType, propertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
+						property.SetValue(entity, value);
+					}
 					
 					if (!entityPropertyElementLookup.TryGetValue(entity, out var lookup))
 					{
@@ -114,8 +142,11 @@ internal class RepositoryFactory
 					
 					lookup[property] = propertyElement;
 				}
-				
-				(entity as INotifyInitialization)?.PostInitialize();
+
+				if (!@abstract)
+				{
+					(entity as INotifyInitialization)?.PostInitialize();
+				}
 			}
 			
 			foreach (var (entity, entityElement) in pendingInitializedEntities)
@@ -350,9 +381,10 @@ internal class RepositoryFactory
 	private const string MAP_KEY_ELEMENT_NAME = "Key";
 	private const string MAP_VALUE_ELEMENT_NAME = "Value";
 
-	private const string SEP_ATTRIBUTE_NAME = "Sep";
+	private const string ABSTRACT_ATTRIBUTE_NAME = "Abstract";
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
 	private const string EXTENDS_SEP_ATTRIBUTE_NAME = "ExtendsSep";
+	private const string SEP_ATTRIBUTE_NAME = "Sep";
 
 	private const string HASHSET_ADD_METHOD_NAME = "Add";
 

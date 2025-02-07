@@ -17,6 +17,21 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 
 	void INotifyInitialization.PostInitialize()
 	{
+		// Clear abstract entities
+		List<TPrimaryKey> abstractEntities = [];
+		foreach (var (primaryKey, entity) in _storage)
+		{
+			if (entity.IsAbstract)
+			{
+				abstractEntities.Add(primaryKey);
+			}
+		}
+
+		foreach (var entity in abstractEntities)
+		{
+			_storage.Remove(entity);
+		}
+		
 		_state = EState.Initialized;
 	}
 
@@ -62,7 +77,7 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 		_storage[primaryKey] = (TEntity)entity;
 	}
 
-	bool IRepository.TryGetEntity(object primaryKey, [NotNullWhen(true)] out object? entity)
+	bool IRepository.TryGetEntity(object primaryKey, [NotNullWhen(true)] out IEntity? entity)
 	{
 		bool suc = _storage.TryGetValue((TPrimaryKey)primaryKey, out var typedEntity);
 		entity = suc ? typedEntity : null;

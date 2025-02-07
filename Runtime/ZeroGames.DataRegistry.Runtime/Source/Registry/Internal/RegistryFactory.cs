@@ -45,7 +45,7 @@ public class RegistryFactory : IRegistryFactory
 		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[count];
 		Dictionary<Type, IInitializingRepository> repositoryByEntityType = [];
 		
-		{ // Stage II: Allocate all repositories first but not initialize here (only primary key is available on entities).
+		{ // Stage II: Allocate all repositories first but not initialize here (only properties defined by IEntity interface is available on entities).
 			int32 i = 0;
 			foreach (var repositoryProperty in metadata.Repositories)
 			{
@@ -71,7 +71,7 @@ public class RegistryFactory : IRegistryFactory
 			}
 		}
 
-		{ // Stage III: Merge entities in inherited repository into base repository.
+		{ // Stage III: Merge concrete entities in inherited repository into base repository.
 			foreach (var repository in repositoryByEntityType
 				.Select(pair => pair.Value)
 				.Where(repo => repo.EntityType.BaseType is {} baseType && baseType != typeof(object))
@@ -83,7 +83,7 @@ public class RegistryFactory : IRegistryFactory
 				}))
 			{
 				IInitializingRepository baseRepository = repositoryByEntityType[repository.EntityType.BaseType!];
-				foreach (var entity in repository.Entities)
+				foreach (var entity in repository.Entities.Where(e => !e.IsAbstract))
 				{
 					baseRepository.RegisterEntity(entity);
 				}

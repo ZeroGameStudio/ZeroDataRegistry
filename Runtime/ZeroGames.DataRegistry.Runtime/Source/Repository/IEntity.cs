@@ -4,7 +4,8 @@ namespace ZeroGames.DataRegistry.Runtime;
 
 public interface IEntity
 {
-	public object PrimaryKey { get; }
+	object PrimaryKey { get; }
+	bool IsAbstract { get; }
 }
 
 public interface IEntity<out TPrimaryKey> : IEntity where TPrimaryKey : notnull
