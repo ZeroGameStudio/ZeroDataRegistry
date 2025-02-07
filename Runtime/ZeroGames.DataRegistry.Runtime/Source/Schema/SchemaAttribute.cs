@@ -2,7 +2,7 @@
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Enum)]
 public class SchemaAttribute(Type schema) : Attribute
 {
 	public Type Schema { get; } = schema;

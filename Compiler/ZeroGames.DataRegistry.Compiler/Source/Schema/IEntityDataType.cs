@@ -6,6 +6,8 @@ public interface IEntityDataType : ICompositeDataType
 {
 	new IEntityDataType? BaseType { get; }
 	IReadOnlyList<IProperty> PrimaryKeyComponents { get; }
+	
+	ICompositeDataType? ICompositeDataType.BaseType => BaseType;
 }
 
 

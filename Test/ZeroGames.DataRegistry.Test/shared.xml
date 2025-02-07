@@ -2,6 +2,14 @@
 
 
 <Schema Name="Shared" Namespace="ZeroGames.DataRegistry.Test.Shared">
+    
+    <Interface Name="INameProvider">
+        <Property Type="string" Name="Name" />
+    </Interface>
+
+    <Interface Name="IDescProvider" Extends="INameProvider">
+        <Property Type="string?" Name="Desc" />
+    </Interface>
 
     <Entity Name="Constant">
         <PrimaryKey Type="uint64" Name="Id" />

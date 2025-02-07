@@ -7,6 +7,8 @@ public interface ISchema : ISchemaElement, INamespaceProvider
 	SchemaSourceUri Uri { get; }
 	IReadOnlyDictionary<string, ISchema> ImportMap { get; }
 	IReadOnlyList<IUserDefinedDataType> DataTypes { get; }
+	
+	ISchema ISchemaElement.Schema => this;
 }
 
 

@@ -135,34 +135,46 @@ internal sealed class CompilerClient
 			Directory.CreateDirectory(_outputDir);
 			
 			bool success = true;
-			ICompiler server = CreateServer();
-			await foreach (var result in server.CompileAsync(_sources))
+			try
 			{
-				ELogLevel logLevel = result.ErrorLevel switch
+				ICompiler server = CreateServer();
+				await foreach (var result in server.CompileAsync(_sources))
 				{
-					ECompilationErrorLevel.Success or ECompilationErrorLevel.Info => ELogLevel.Log,
-					ECompilationErrorLevel.Warning => ELogLevel.Warning,
-					ECompilationErrorLevel.Error => ELogLevel.Error,
-					_ => ELogLevel.Log,
-				};
-				_logger(logLevel, $"{result.Properties["Uri"]} - {result.Message}");
-				if (result.ErrorLevel > ECompilationErrorLevel.Warning)
-				{
-					success = false;
-					continue;
+					ELogLevel logLevel = result.ErrorLevel switch
+					{
+						ECompilationErrorLevel.Success or ECompilationErrorLevel.Info => ELogLevel.Log,
+						ECompilationErrorLevel.Warning => ELogLevel.Warning,
+						ECompilationErrorLevel.Error => ELogLevel.Error,
+						_ => ELogLevel.Log,
+					};
+					_logger(logLevel, $"{result.Properties["Uri"]} - {result.Message}");
+					if (result.ErrorLevel > ECompilationErrorLevel.Warning)
+					{
+						success = false;
+						continue;
+					}
+
+					Stream dest = result.Dest;
+					string outputDir = $"{_outputDir}/{result.Properties["Schema"]}";
+					if (!Directory.Exists(outputDir))
+					{
+						Directory.CreateDirectory(outputDir);
+					}
+
+					string outputPath = $"{outputDir}/{result.Properties["Name"]}.cs";
+					await using FileStream fs = File.OpenWrite(outputPath);
+					await dest.CopyToAsync(fs);
+					_logger(ELogLevel.Log, $"File generated: {outputPath}");
 				}
-				
-				Stream dest = result.Dest;
-				string outputDir = $"{_outputDir}/{result.Properties["Schema"]}";
-				if (!Directory.Exists(outputDir))
-				{
-					Directory.CreateDirectory(outputDir);
-				}
-				
-				string outputPath = $"{outputDir}/{result.Properties["Name"]}.cs";
-				await using FileStream fs = File.OpenWrite(outputPath);
-				await dest.CopyToAsync(fs);
-				_logger(ELogLevel.Log, $"File generated: {outputPath}");
+			}
+			catch (Exception)
+			{
+				success = false;
+			}
+
+			if (!success)
+			{
+				Directory.Delete(_outputDir, true);
 			}
 
 			return success;

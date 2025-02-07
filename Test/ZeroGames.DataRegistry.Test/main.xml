@@ -10,9 +10,7 @@
         <PrimaryKey Type="string" Name="Uri" />
     </Entity>
 
-    <Entity Name="Item" Extends="ItemBase" Namespace="System">
-        <Property Type="string" Name="Name" />
-        <Property Type="string?" Name="Desc" />
+    <Entity Name="Item" Namespace="System" Extends="ItemBase" Implements="Shared.INameProvider, Shared.IDescProvider">
         <ForeignKey Type="Icon[]" Name="Icons" />
         <Property Type="string[]" Name="Strings" />
         <Property Type="string{}" Name="StringSet" />
@@ -20,13 +18,13 @@
         <ForeignKey Type="Icon?" Name="Icon" />
     </Entity>
     
-    <Entity Name="Weapon" Extends="Item" Namespace="System">
+    <Entity Name="Weapon" Namespace="System" Extends="Item">
         <Property Type="Shared.Point2D" Name="AttachPoint" />
         <Property Type="Shared.EDamageType" Name="DamageType" />
         <Property Type="double" Name="Damage" />
     </Entity>
 
-    <Entity Name="Armor" Extends="Item" Namespace="System">
+    <Entity Name="Armor" Namespace="System" Extends="Item">
         <Property Type="Shared.Point2D" Name="AttachPoint" />
         <Property Type="double" Name="Defence" />
     </Entity>

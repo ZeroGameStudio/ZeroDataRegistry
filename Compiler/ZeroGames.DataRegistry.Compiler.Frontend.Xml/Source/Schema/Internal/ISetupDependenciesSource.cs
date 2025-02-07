@@ -2,7 +2,7 @@
 
 namespace ZeroGames.DataRegistry.Compiler.Frontend.Xml;
 
-public interface ISetupDependenciesSource
+internal interface ISetupDependenciesSource
 {
 	bool SetupDependencies();
 }

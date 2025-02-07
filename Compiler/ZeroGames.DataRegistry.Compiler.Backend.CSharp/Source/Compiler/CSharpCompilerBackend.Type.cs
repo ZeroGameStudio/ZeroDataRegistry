@@ -9,9 +9,12 @@ public partial class CSharpCompilerBackend
 
 	private string GetAbstractModifierCode(IUserDefinedDataType type)
 		=> type is ICompositeDataType { IsAbstract: true } ? "abstract " : string.Empty;
+	
+	private string GetPartialModifierCode(IUserDefinedDataType type)
+		=> _options.GeneratesPartialTypes && type is not IEnumDataType ? "partial " : string.Empty;
 
 	private string GetTypeKindCode(IUserDefinedDataType type)
-		=> type is IEnumDataType ? "enum" : _options.GeneratesPartialTypes ? "partial class" : "class";
+		=> type is IEnumDataType ? "enum" : type is IInterfaceDataType ? "interface" : "class";
 
 	private string GetBaseTypeCode(IUserDefinedDataType type)
 	{
@@ -19,6 +22,14 @@ public partial class CSharpCompilerBackend
 		if (type.BaseType is { } baseType)
 		{
 			baseTypes.Add(baseType.Name);
+		}
+
+		if (type is ICompositeDataType compositeType)
+		{
+			foreach (var interfaceType in compositeType.Interfaces)
+			{
+				baseTypes.Add(interfaceType.Name);
+			}
 		}
 
 		if (type is IEntityDataType { BaseType: null } entityType)
@@ -48,7 +59,12 @@ public partial class CSharpCompilerBackend
 
 		if (type is ICompositeDataType compositeType)
 		{
-			foreach (var property in compositeType.Properties)
+			foreach (var interfaceType in compositeType.Interfaces)
+			{
+				LootTypeNamespace(interfaceType, usings);
+			}
+			
+			foreach (var property in GetTypeProperties(compositeType))
 			{
 				LootTypeNamespace(property.Type, usings);
 			}
@@ -94,7 +110,7 @@ public partial class CSharpCompilerBackend
 		return
 $@"{GetSchemaAttributeCode(type.Schema)}
 {GetGeneratedCodeAttributeCode()}
-public {GetAbstractModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
+public {GetAbstractModifierCode(type)}{GetPartialModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 {{
 {Indent(GetTypeMembersCode(type))}
 }}";
@@ -125,16 +141,72 @@ public {GetAbstractModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBas
 	}
 
 	private string GetTypePropertiesCode(ICompositeDataType type)
-		=> string.Join(Environment.NewLine + Environment.NewLine, type.Properties.Select(property =>
+	{
+		return string.Join(Environment.NewLine + Environment.NewLine, GetTypeProperties(type).Select(property =>
 		{
-			if (property.Name == "PrimaryKey")
+			if (type is IInterfaceDataType)
 			{
-				throw new NotSupportedException("Property name 'PrimaryKey' is reserved.");
+				return $"[Property]{Environment.NewLine}{GetTypeNameCode(property.Type)} {property.Name} {{ get; }}";
 			}
-			
-			string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : "[Property]";
-			return $"{attributeCode}{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
+			else
+			{
+				string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : "[Property]";
+				return $"{attributeCode}{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
+			}
 		}));
+	}
+
+	private IProperty[] GetTypeProperties(ICompositeDataType type)
+	{
+		IEnumerable<IProperty> selfProperties = type.Properties;
+		IEnumerable<IProperty> implementedProperties = [];
+		if (type is not IInterfaceDataType)
+		{
+			void ExpandInterface(ICompositeDataType? current, HashSet<IInterfaceDataType> traversedInterfaces, bool ignoreBaseType, ICollection<IInterfaceDataType> result)
+			{
+				if (current is null)
+				{
+					return;
+				}
+				
+				if (!ignoreBaseType)
+				{
+					ExpandInterface(current.BaseType, traversedInterfaces, false, result);
+				}
+				
+				foreach (var @interface in current.Interfaces)
+				{
+					if (!traversedInterfaces.Add(@interface))
+					{
+						continue;
+					}
+					
+					ExpandInterface(@interface, traversedInterfaces, true, result);
+					result.Add(@interface);
+				}
+			}
+
+			HashSet<IInterfaceDataType> expandedInheritedInterfaces = [];
+			ExpandInterface(type.BaseType, expandedInheritedInterfaces, false, expandedInheritedInterfaces);
+			
+			List<IInterfaceDataType> expandedNewInterfaces = [];
+			ExpandInterface(type, expandedInheritedInterfaces, true, expandedNewInterfaces);
+
+			implementedProperties = expandedNewInterfaces.SelectMany(newInterface => newInterface.Properties);
+		}
+		
+		IProperty[] properties = implementedProperties.Concat(selfProperties).ToArray();
+		HashSet<string> usedNames = [];
+		foreach (var property in properties)
+		{
+			if (!usedNames.Add(property.Name))
+			{
+				throw new InvalidOperationException($"Duplicated property name '{property.Name}' detected in type '{type.Name}'.");
+			}
+		}
+		
+		return properties;
+	}
 
 	private string GetTypeNameCode(IDataType type)
 	{
@@ -192,7 +264,7 @@ public {GetAbstractModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBas
 
 			Dictionary<string, string> properties = new()
 			{
-				["Type"] = type is IEntityDataType ? "Entity" : type is IStructDataType ? "Struct" : type is IEnumDataType ? "Enum" : throw new EmitterException(),
+				["Type"] = type is IEntityDataType ? "Entity" : type is IStructDataType ? "Struct" : type is IInterfaceDataType ? "Interface" : type is IEnumDataType ? "Enum" : throw new EmitterException(),
 				["Schema"] = type.Schema.Name,
 				["Uri"] = $"{type.Schema.Name}.{type.Name}",
 				["Name"] = type.Name,

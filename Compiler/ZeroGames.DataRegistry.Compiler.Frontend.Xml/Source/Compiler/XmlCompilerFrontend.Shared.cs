@@ -71,6 +71,7 @@ public partial class XmlCompilerFrontend
 	private const string METADATA_ELEMENT_NAME = "Metadata";
 	private const string ENTITY_ELEMENT_NAME = "Entity";
 	private const string STRUCT_ELEMENT_NAME = "Struct";
+	private const string INTERFACE_ELEMENT_NAME = "Interface";
 	private const string ENUM_ELEMENT_NAME = "Enum";
 	private const string PRIMARY_KEY_ELEMENT_NAME = "PrimaryKey";
 	private const string FOREIGN_KEY_ELEMENT_NAME = "ForeignKey";
@@ -83,6 +84,7 @@ public partial class XmlCompilerFrontend
 	private const string NAMESPACE_ATTRIBUTE_NAME = "Namespace";
 	private const string TYPE_ATTRIBUTE_NAME = "Type";
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
+	private const string IMPLEMENTS_ATTRIBUTE_NAME = "Implements";
 	private const string ABSTRACT_ATTRIBUTE_NAME = "Abstract";
 	private const string KEY_ATTRIBUTE_NAME = "Key";
 	private const string VALUE_ATTRIBUTE_NAME = "Value";
@@ -100,7 +102,9 @@ public partial class XmlCompilerFrontend
 		"long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", 
 		"public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct",
 		"switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual",
-		"void", "volatile", "while"
+		"void", "volatile", "while",
+		
+		"PrimaryKey",
 	];
 	
 }

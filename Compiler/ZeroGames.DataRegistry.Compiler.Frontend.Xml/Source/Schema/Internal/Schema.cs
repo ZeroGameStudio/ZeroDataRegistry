@@ -12,7 +12,6 @@ internal sealed class Schema : ISchema
 	}
 
 	public required SchemaSourceUri Uri { get; init; }
-	ISchema ISchemaElement.Schema => this;
 	public required string Name { get; init; }
 	public required string Namespace { get; init; }
 	public IReadOnlyDictionary<string, ISchema> ImportMap { get; }

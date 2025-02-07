@@ -33,6 +33,10 @@ public partial class XmlCompilerFrontend
 		{
 			return ParseStruct(typeElement, schema);
 		}
+		else if (typeElement.Name == INTERFACE_ELEMENT_NAME)
+		{
+			return ParseInterface(typeElement, schema);
+		}
 		else if (typeElement.Name == ENUM_ELEMENT_NAME)
 		{
 			return ParseEnum(typeElement, schema);
@@ -59,6 +63,7 @@ public partial class XmlCompilerFrontend
 			Namespace = GetNamespace(entityElement),
 			PrimaryKeyComponents = primaryKeyComponents,
 			BaseTypeFactory = ParseBaseType<IEntityDataType>(entityElement, schema),
+			InterfaceFactory = ParseImplementedInterfaces(entityElement, schema),
 			IsAbstract = entityElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
 			Properties = properties,
 			Metadatas = ParseMetadatas(entityElement, schema),
@@ -73,10 +78,43 @@ public partial class XmlCompilerFrontend
 			Name = GetName(structElement),
 			Namespace =  GetNamespace(structElement),
 			BaseTypeFactory = ParseBaseType<IStructDataType>(structElement, schema),
+			InterfaceFactory = ParseImplementedInterfaces(structElement, schema),
 			IsAbstract = structElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
 			Properties = ParseProperties(structElement, schema),
 			Metadatas = ParseMetadatas(structElement, schema),
 		};
+	}
+	
+	private IInterfaceDataType ParseInterface(XElement interfaceElement, ISchema schema)
+	{
+		return new InterfaceDataType
+		{
+			Schema = schema,
+			Name = GetName(interfaceElement),
+			Namespace =  GetNamespace(interfaceElement),
+			InterfaceFactory = ParseImplementedInterfaces(interfaceElement, schema),
+			IsAbstract = interfaceElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
+			Properties = ParseProperties(interfaceElement, schema),
+			Metadatas = ParseMetadatas(interfaceElement, schema),
+		};
+	}
+
+	private Func<IReadOnlyList<IInterfaceDataType>> ParseImplementedInterfaces(XElement compositeTypeElement, ISchema typeSchema)
+	{
+		string interfaceAttributeName = compositeTypeElement.Name != INTERFACE_ELEMENT_NAME ? IMPLEMENTS_ATTRIBUTE_NAME : EXTENDS_ATTRIBUTE_NAME;
+		string[]? interfacePaths = compositeTypeElement.Attribute(interfaceAttributeName)?.Value.Replace(" ", "").Split(',');
+		if (interfacePaths is null || interfacePaths.Length == 0)
+		{
+			return () => [];
+		}
+
+		return () => interfacePaths.Select(interfacePath =>
+		{
+			string[] nodes = interfacePath.Split('.');
+			ISchema schema = nodes.Length == 2 ? typeSchema.ImportMap[nodes[0]] : typeSchema;
+			string interfaceTypeName = nodes.Last();
+			return schema.DataTypes.OfType<IInterfaceDataType>().Single(interfaceType => interfaceType.Name == interfaceTypeName);
+		}).ToArray();
 	}
 
 	private Func<T?> ParseBaseType<T>(XElement compositeTypeElement, ISchema typeSchema) where T : class, ICompositeDataType
