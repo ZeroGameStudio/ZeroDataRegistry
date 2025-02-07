@@ -25,10 +25,7 @@
                     <Key>x</Key>
                     <Value>100</Value>
                 </Element>
-                <Element>
-                    <Key>y</Key>
-                    <Value>200</Value>
-                </Element>
+                <Element Key="y">200</Element>
             </AttributeMap>
             <Icon><Icon>10001001</Icon></Icon>
         </Item>

@@ -295,9 +295,23 @@ internal class RepositoryFactory
 				{
 					throw new InvalidOperationException();
 				}
+
+				string keyString;
+				XElement valueElement;
+				XAttribute? keyAttribute = element.Attribute(MAP_KEY_ELEMENT_NAME);
+				if (keyAttribute is null)
+				{
+					keyString = element.Element(MAP_KEY_ELEMENT_NAME)?.Value ?? throw new InvalidOperationException();
+					valueElement = element.Element(MAP_VALUE_ELEMENT_NAME) ?? throw new InvalidOperationException();
+				}
+				else
+				{
+					keyString = keyAttribute.Value;
+					valueElement = element;
+				}
 				
-				object key = SerializeNonContainer(keyType, element.Element(MAP_KEY_ELEMENT_NAME)!, ReturnNotNull.True, getEntity);
-				object value = SerializeNonContainer(valueType, element.Element(MAP_VALUE_ELEMENT_NAME)!, ReturnNotNull.True, getEntity);
+				object key = SerializePrimitive(keyType, keyString);
+				object value = SerializeNonContainer(valueType, valueElement, ReturnNotNull.True, getEntity);
 				container[key] = value;
 			}
 

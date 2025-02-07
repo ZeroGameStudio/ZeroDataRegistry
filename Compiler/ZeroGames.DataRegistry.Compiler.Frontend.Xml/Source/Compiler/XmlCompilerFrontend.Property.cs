@@ -179,7 +179,7 @@ public partial class XmlCompilerFrontend
 		Func<IPrimitiveDataType> keyTypeFactory = () =>
 		{
 			IDataType keyType = ParseNonContainerType(keyTypePath, propertyElement, propertySchema)();
-			if (keyType is not IPrimitiveDataType primitiveKeyType)
+			if (keyType is not IPrimitiveDataType { CanBeKey: true } primitiveKeyType)
 			{
 				throw new ParserException();
 			}
