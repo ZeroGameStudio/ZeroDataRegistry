@@ -1,12 +1,9 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace ZeroGames.DataRegistry.Runtime;
 
 public interface IRepository : IRegistryElement
 {
-	bool TryGetEntity(object primaryKey, [NotNullWhen(true)] out IEntity? entity);
 	Type EntityType { get; }
 	IEnumerable<IEntity> Entities { get; }
 }

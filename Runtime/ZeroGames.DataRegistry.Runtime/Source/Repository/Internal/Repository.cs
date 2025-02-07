@@ -17,20 +17,7 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 
 	void INotifyInitialization.PostInitialize()
 	{
-		// Clear abstract entities
-		List<TPrimaryKey> abstractEntities = [];
-		foreach (var (primaryKey, entity) in _storage)
-		{
-			if (entity.IsAbstract)
-			{
-				abstractEntities.Add(primaryKey);
-			}
-		}
-
-		foreach (var entity in abstractEntities)
-		{
-			_storage.Remove(entity);
-		}
+		_abstractStorage = null;
 		
 		_state = EState.Initialized;
 	}
@@ -61,7 +48,7 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 		return _storage.TryGetValue(key, out value);
 	}
 
-	void IInitializingRepository.RegisterEntity(IEntity entity)
+	void IInitializingRepository.RegisterEntity(IEntity entity, bool @abstract)
 	{
 		if (_state != EState.Initializing)
 		{
@@ -69,18 +56,31 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 		}
 		
 		var primaryKey = (TPrimaryKey)entity.PrimaryKey;
-		if (_storage.ContainsKey(primaryKey))
+
+		if (@abstract)
+		{
+			_abstractStorage ??= [];
+		}
+
+		Dictionary<TPrimaryKey, TEntity> storage = @abstract ? _abstractStorage! : _storage;
+		if (storage.ContainsKey(primaryKey))
 		{
 			throw new InvalidOperationException($"Primary key '{primaryKey}' already exists.");
 		}
 		
-		_storage[primaryKey] = (TEntity)entity;
+		storage[primaryKey] = (TEntity)entity;
 	}
 
-	bool IRepository.TryGetEntity(object primaryKey, [NotNullWhen(true)] out IEntity? entity)
+	bool IInitializingRepository.TryGetEntity(object primaryKey, bool evenIfAbstract, [NotNullWhen(true)] out IEntity? entity)
 	{
-		bool suc = _storage.TryGetValue((TPrimaryKey)primaryKey, out var typedEntity);
-		entity = suc ? typedEntity : null;
+		var typedPrimaryKey = (TPrimaryKey)primaryKey;
+		bool suc = _storage.TryGetValue(typedPrimaryKey, out var typedEntity);
+		if (!suc && evenIfAbstract && _abstractStorage is not null)
+		{
+			suc = _abstractStorage.TryGetValue(typedPrimaryKey, out typedEntity);
+		}
+		
+		entity = typedEntity;
 		return suc;
 	}
 
@@ -147,7 +147,8 @@ internal class Repository<TPrimaryKey, TEntity> : IRepository<TPrimaryKey, TEnti
 	private EState _state = EState.Uninitialized;
 
 	private readonly Dictionary<TPrimaryKey, TEntity> _storage = new();
-	
+	private Dictionary<TPrimaryKey, TEntity>? _abstractStorage;
+
 }
 
 

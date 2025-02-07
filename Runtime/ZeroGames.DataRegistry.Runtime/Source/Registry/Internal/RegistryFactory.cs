@@ -83,9 +83,9 @@ public class RegistryFactory : IRegistryFactory
 				}))
 			{
 				IInitializingRepository baseRepository = repositoryByEntityType[repository.EntityType.BaseType!];
-				foreach (var entity in repository.Entities.Where(e => !e.IsAbstract))
+				foreach (var entity in repository.Entities)
 				{
-					baseRepository.RegisterEntity(entity);
+					baseRepository.RegisterEntity(entity, false);
 				}
 			}
 		}
@@ -98,9 +98,9 @@ public class RegistryFactory : IRegistryFactory
 				return rootTypeSchema.GetCustomAttribute<DataTypesAttribute>()![typeName];
 			};
 			
-			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey) =>
+			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey, evenIfAbstract) =>
 			{
-				repositoryByEntityType[type].TryGetEntity(primaryKey, out var entity);
+				repositoryByEntityType[type].TryGetEntity(primaryKey, evenIfAbstract, out var entity);
 				return entity;
 			};
 		

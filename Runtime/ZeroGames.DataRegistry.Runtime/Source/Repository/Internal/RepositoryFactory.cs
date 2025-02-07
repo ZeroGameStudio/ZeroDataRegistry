@@ -11,7 +11,7 @@ internal class RepositoryFactory
 {
 
 	public delegate Type GetElementTypeDelegate(Type rootType, XElement objectElement);
-	public delegate object? GetEntityDelegate(Type type, object primaryKey);
+	public delegate object? GetEntityDelegate(Type type, object primaryKey, bool evenIfAbstract);
 	public delegate void FinishInitializationDelegate(GetElementTypeDelegate getElementType, GetEntityDelegate getEntity);
 	
 	public IInitializingRepository Create(IRegistry registry, Type entityType, XElement repositoryElement, out FinishInitializationDelegate finishInitialization)
@@ -56,7 +56,8 @@ internal class RepositoryFactory
 				property.SetValue(entity, value);
 			}
 
-			repository.RegisterEntity(entity);
+			bool @abstract = entityElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is { } abstractAttr && bool.Parse(abstractAttr.Value);
+			repository.RegisterEntity(entity, @abstract);
 			pendingInitializedEntities[entity] = entityElement;
 		}
 
@@ -79,7 +80,7 @@ internal class RepositoryFactory
 				{
 					string[] rawComponents = baseEntityReference.Split(entityElement.Attribute(EXTENDS_SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 					object primaryKey = MakePrimaryKey(metadata, rawComponents);
-					repository.TryGetEntity(primaryKey, out baseEntity);
+					repository.TryGetEntity(primaryKey, true, out baseEntity);
 					if (baseEntity is null || baseEntity.GetType() != entityType)
 					{
 						throw new InvalidOperationException();
@@ -90,11 +91,6 @@ internal class RepositoryFactory
 
 				// Now all base entities on the inheritance chain is initialized so we can initialize this entity.
 				bool @abstract = entityElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is { } abstractAttr && bool.Parse(abstractAttr.Value);
-				if (@abstract)
-				{
-					entityType.GetProperty(nameof(IEntity.IsAbstract), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(entity, true);
-				}
-
 				if (!@abstract)
 				{
 					(entity as INotifyInitialization)?.PreInitialize();
@@ -356,7 +352,7 @@ internal class RepositoryFactory
 			GetEntityMetadata(implementationType, out var metadata);
 			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
-			return getEntity(implementationType, primaryKey);
+			return getEntity(implementationType, primaryKey, false);
 		}
 
 		if (empty && !notnull)
