@@ -7,6 +7,9 @@ namespace ZeroGames.DataRegistry.Compiler.Backend.CSharp;
 public partial class CSharpCompilerBackend
 {
 
+	private string GetAbstractModifierCode(IUserDefinedDataType type)
+		=> type is ICompositeDataType { IsAbstract: true } ? "abstract " : string.Empty;
+
 	private string GetTypeKindCode(IUserDefinedDataType type)
 		=> type is IEnumDataType ? "enum" : _options.GeneratesPartialTypes ? "partial class" : "class";
 
@@ -91,7 +94,7 @@ public partial class CSharpCompilerBackend
 		return
 $@"{GetSchemaAttributeCode(type.Schema)}
 {GetGeneratedCodeAttributeCode()}
-public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
+public {GetAbstractModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 {{
 {Indent(GetTypeMembersCode(type))}
 }}";

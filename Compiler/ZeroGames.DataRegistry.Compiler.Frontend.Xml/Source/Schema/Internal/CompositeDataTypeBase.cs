@@ -6,6 +6,7 @@ internal abstract class CompositeDataTypeBase : UserDefinedDataTypeBase, ICompos
 {
 	public abstract bool SetupDependencies();
 	
+	public required bool IsAbstract { get; init; }
 	public required IReadOnlyList<IProperty> Properties { get; init; }
 }
 

@@ -91,6 +91,49 @@
             <Icon></Icon>
         </Weapon>
     </WeaponRepository>
+    
+    <ArmorRepository>
+        <Armor>
+            <Id>30001</Id>
+            <Name>铁甲</Name>
+            <Uri>30001</Uri>
+            <Desc>防御力+5</Desc>
+            <Icons>
+                <Element><Icon>30001001</Icon></Element>
+                <Element><Icon>30001002</Icon></Element>
+            </Icons>
+            <Strings>
+                <Element>12345000</Element>
+                <Element>abcde000</Element>
+            </Strings>
+            <StringSet>
+                <Element>12345000</Element>
+                <Element>abcde000</Element>
+            </StringSet>
+            <AttributeMap>
+                <Element>
+                    <Key>x</Key>
+                    <Value>1000</Value>
+                </Element>
+                <Element>
+                    <Key>y</Key>
+                    <Value>2000</Value>
+                </Element>
+                <Element>
+                    <Key>z</Key>
+                    <Value>3000</Value>
+                </Element>
+            </AttributeMap>
+            <AttachPoint>
+                <Point2D>
+                    <X>1000</X>
+                    <Y>2000</Y>
+                </Point2D>
+            </AttachPoint>
+            <Defence>10</Defence>
+            <Icon></Icon>
+        </Armor>
+    </ArmorRepository>
 
     <IconRepository>
         
@@ -112,6 +155,16 @@
         <Icon>
             <Id>20001002</Id>
             <Path>/Game/UI/Icons/20001002</Path>
+        </Icon>
+
+        <Icon>
+            <Id>30001001</Id>
+            <Path>/Game/UI/Icons/30001001</Path>
+        </Icon>
+
+        <Icon>
+            <Id>30001002</Id>
+            <Path>/Game/UI/Icons/30001002</Path>
         </Icon>
         
     </IconRepository>

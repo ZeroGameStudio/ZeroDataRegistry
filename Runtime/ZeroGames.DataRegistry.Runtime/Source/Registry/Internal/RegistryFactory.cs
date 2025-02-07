@@ -41,10 +41,9 @@ public class RegistryFactory : IRegistryFactory
 		{
 			PrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>(),
 		};
-		int32 count = metadata.Repositories.Count;
-		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[count];
+		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[metadata.Repositories.Count];
 		Dictionary<Type, IInitializingRepository> repositoryByEntityType = [];
-		
+
 		{ // Stage II: Allocate all repositories first but not initialize here (only properties defined by IEntity interface is available on entities).
 			int32 i = 0;
 			foreach (var repositoryProperty in metadata.Repositories)
@@ -53,12 +52,12 @@ public class RegistryFactory : IRegistryFactory
 				Type[] propertyTypeParameters = propertyType.GetGenericInstanceOf(typeof(IRepository<,>))!.GetGenericArguments();
 				Type entityType = propertyTypeParameters[1];
 				XElement? root = document.Root?.Element($"{entityType.Name}Repository");
-				if (root is null)
+				if (root is null ^ entityType.IsAbstract)
 				{
 					throw new InvalidOperationException();
 				}
-			
-				IInitializingRepository repository = factory.Create(registry, entityType, root, out var finishInitialization);
+
+				IInitializingRepository repository = root is not null ? factory.Create(registry, entityType, root, out var finishInitialization) : factory.Create(registry, entityType, out finishInitialization);
 				if (!repository.GetType().IsAssignableTo(propertyType))
 				{
 					throw new InvalidOperationException();
@@ -70,17 +69,17 @@ public class RegistryFactory : IRegistryFactory
 				repositoryByEntityType[repository.EntityType] = repository;
 			}
 		}
-
+		
 		{ // Stage III: Merge concrete entities in inherited repository into base repository.
 			foreach (var repository in repositoryByEntityType
-				.Select(pair => pair.Value)
-				.Where(repo => repo.EntityType.BaseType is {} baseType && baseType != typeof(object))
-				.OrderByDescending(repo =>
-				{
-				    int32 depth = 0;
-				    for (Type? baseType = repo.EntityType.BaseType; baseType is {} b && b != typeof(object); baseType = baseType.BaseType) ++depth;
-				    return depth;
-				}))
+				         .Select(pair => pair.Value)
+				         .Where(repo => repo.EntityType.BaseType is {} baseType && baseType != typeof(object))
+				         .OrderByDescending(repo =>
+				         {
+					         int32 depth = 0;
+					         for (Type? baseType = repo.EntityType.BaseType; baseType is {} b && b != typeof(object); baseType = baseType.BaseType) ++depth;
+					         return depth;
+				         }))
 			{
 				IInitializingRepository baseRepository = repositoryByEntityType[repository.EntityType.BaseType!];
 				foreach (var entity in repository.Entities)
@@ -89,13 +88,19 @@ public class RegistryFactory : IRegistryFactory
 				}
 			}
 		}
-
+		
 		{ // Stage IV: Now all entities are in right place, and we can initialize them: Fill data, fixup references, etc.
 			RepositoryFactory.GetElementTypeDelegate getElementType = (rootType, objectElement) =>
 			{
 				Type rootTypeSchema = rootType.GetCustomAttribute<SchemaAttribute>()!.Schema;
 				string typeName = objectElement.Name.ToString();
-				return rootTypeSchema.GetCustomAttribute<DataTypesAttribute>()![typeName];
+				if (typeName == rootType.Name)
+				{
+					return rootType;
+				}
+				
+				Type implementationType = rootTypeSchema.GetCustomAttribute<DataTypesAttribute>()![typeName];
+				return !implementationType.IsAbstract && implementationType.IsAssignableTo(rootType) ? implementationType : throw new InvalidOperationException();
 			};
 			
 			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey, evenIfAbstract) =>

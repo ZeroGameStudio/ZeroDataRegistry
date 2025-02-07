@@ -83,6 +83,7 @@ public partial class XmlCompilerFrontend
 	private const string NAMESPACE_ATTRIBUTE_NAME = "Namespace";
 	private const string TYPE_ATTRIBUTE_NAME = "Type";
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
+	private const string ABSTRACT_ATTRIBUTE_NAME = "Abstract";
 	private const string KEY_ATTRIBUTE_NAME = "Key";
 	private const string VALUE_ATTRIBUTE_NAME = "Value";
 

@@ -59,6 +59,7 @@ public partial class XmlCompilerFrontend
 			Namespace = GetNamespace(entityElement),
 			PrimaryKeyComponents = primaryKeyComponents,
 			BaseTypeFactory = ParseBaseType<IEntityDataType>(entityElement, schema),
+			IsAbstract = entityElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
 			Properties = properties,
 			Metadatas = ParseMetadatas(entityElement, schema),
 		};
@@ -72,6 +73,7 @@ public partial class XmlCompilerFrontend
 			Name = GetName(structElement),
 			Namespace =  GetNamespace(structElement),
 			BaseTypeFactory = ParseBaseType<IStructDataType>(structElement, schema),
+			IsAbstract = structElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
 			Properties = ParseProperties(structElement, schema),
 			Metadatas = ParseMetadatas(structElement, schema),
 		};

@@ -4,11 +4,14 @@
 <Schema Name="Main" Namespace="ZeroGames.DataRegistry.Test">
     
     <Import Uri="shared" Alias="Shared" />
-
-    <Entity Name="Item" Namespace="System">
+    
+    <Entity Name="ItemBase" Namespace="System" Abstract="true">
         <PrimaryKey Type="uint64" Name="Id" />
-        <Property Type="string" Name="Name" />
         <PrimaryKey Type="string" Name="Uri" />
+    </Entity>
+
+    <Entity Name="Item" Extends="ItemBase" Namespace="System">
+        <Property Type="string" Name="Name" />
         <Property Type="string?" Name="Desc" />
         <ForeignKey Type="Icon[]" Name="Icons" />
         <Property Type="string[]" Name="Strings" />
@@ -21,6 +24,11 @@
         <Property Type="Shared.Point2D" Name="AttachPoint" />
         <Property Type="Shared.EDamageType" Name="DamageType" />
         <Property Type="double" Name="Damage" />
+    </Entity>
+
+    <Entity Name="Armor" Extends="Item" Namespace="System">
+        <Property Type="Shared.Point2D" Name="AttachPoint" />
+        <Property Type="double" Name="Defence" />
     </Entity>
     
     <Entity Name="Icon">

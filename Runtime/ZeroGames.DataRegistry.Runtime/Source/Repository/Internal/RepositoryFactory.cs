@@ -11,24 +11,25 @@ internal class RepositoryFactory
 {
 
 	public delegate Type GetElementTypeDelegate(Type rootType, XElement objectElement);
-	public delegate object? GetEntityDelegate(Type type, object primaryKey, bool evenIfAbstract);
+	public delegate IEntity? GetEntityDelegate(Type type, object primaryKey, bool evenIfAbstract);
 	public delegate void FinishInitializationDelegate(GetElementTypeDelegate getElementType, GetEntityDelegate getEntity);
+
+	public IInitializingRepository Create(IRegistry registry, Type entityType, out FinishInitializationDelegate finishInitialization)
+	{
+		IInitializingRepository repository = AllocateRepository(registry, entityType);
+
+		finishInitialization = (_, _) =>
+		{
+			(repository as INotifyInitialization)?.PostInitialize();
+		};
+		
+		return repository;
+	}
 	
 	public IInitializingRepository Create(IRegistry registry, Type entityType, XElement repositoryElement, out FinishInitializationDelegate finishInitialization)
 	{
+		IInitializingRepository repository = AllocateRepository(registry, entityType);
 		GetEntityMetadata(entityType, out var metadata);
-		Type primaryKeyType = metadata.PrimaryKeyType;
-		Type repositoryType = typeof(Repository<,>).MakeGenericType(primaryKeyType, entityType);
-		var repository = (IInitializingRepository?)Activator.CreateInstance(repositoryType);
-		if (repository is null)
-		{
-			throw new InvalidOperationException();
-		}
-
-		repositoryType.GetProperty(nameof(IRegistryElement.Registry))!.SetValue(repository, registry);
-		repositoryType.GetProperty(nameof(IRegistryElement.Name))!.SetValue(repository, $"{entityType.Name}Repository");
-		
-		(repository as INotifyInitialization)?.PreInitialize();
 
 		Dictionary<IEntity, XElement> pendingInitializedEntities = [];
 		foreach (var entityElement in repositoryElement.Elements())
@@ -145,6 +146,7 @@ internal class RepositoryFactory
 				}
 			}
 			
+			// NOTE: pendingInitializedEntities is set up before merge so there won't be child entities.
 			foreach (var (entity, entityElement) in pendingInitializedEntities)
 			{
 				InitializeEntity(entity, entityElement);
@@ -213,6 +215,25 @@ internal class RepositoryFactory
 			};
 			_metadata[entityType] = metadata;
 		}
+	}
+
+	private IInitializingRepository AllocateRepository(IRegistry registry, Type entityType)
+	{
+		GetEntityMetadata(entityType, out var metadata);
+		Type primaryKeyType = metadata.PrimaryKeyType;
+		Type repositoryType = typeof(Repository<,>).MakeGenericType(primaryKeyType, entityType);
+		var repository = (IInitializingRepository?)Activator.CreateInstance(repositoryType);
+		if (repository is null)
+		{
+			throw new InvalidOperationException();
+		}
+
+		repositoryType.GetProperty(nameof(IRegistryElement.Registry))!.SetValue(repository, registry);
+		repositoryType.GetProperty(nameof(IRegistryElement.Name))!.SetValue(repository, $"{entityType.Name}Repository");
+		
+		(repository as INotifyInitialization)?.PreInitialize();
+
+		return repository;
 	}
 
 	private object MakePrimaryKey(in EntityMetadata metadata, ReadOnlySpan<string> rawComponents)
@@ -352,7 +373,13 @@ internal class RepositoryFactory
 			GetEntityMetadata(implementationType, out var metadata);
 			string[] rawComponents = entityReferenceElement.Value.Split(entityReferenceElement.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
-			return getEntity(implementationType, primaryKey, false);
+			IEntity? entity = getEntity(implementationType, primaryKey, false);
+			if (notnull && entity is null)
+			{
+				throw new InvalidOperationException();
+			}
+
+			return entity;
 		}
 
 		if (empty && !notnull)
