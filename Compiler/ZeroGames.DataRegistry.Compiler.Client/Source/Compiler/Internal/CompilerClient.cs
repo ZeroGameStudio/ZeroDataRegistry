@@ -1,5 +1,6 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
+using System.Diagnostics;
 using System.Text.Json;
 using ZeroGames.DataRegistry.Compiler.Backend;
 using ZeroGames.DataRegistry.Compiler.Backend.CSharp;
@@ -121,6 +122,8 @@ internal sealed class CompilerClient
 
 	private async Task<bool> CompileAsync()
 	{
+		Stopwatch stopwatch = Stopwatch.StartNew();
+
 		try
 		{
 			if (Directory.Exists(_outputDir))
@@ -129,11 +132,12 @@ internal sealed class CompilerClient
 				{
 					throw new InvalidOperationException();
 				}
-				
+
 				Directory.Delete(_outputDir, true);
 			}
+
 			Directory.CreateDirectory(_outputDir);
-			
+
 			bool success = true;
 			try
 			{
@@ -183,6 +187,10 @@ internal sealed class CompilerClient
 		{
 			_logger(ELogLevel.Error, ex);
 			return false;
+		}
+		finally
+		{
+			_logger(ELogLevel.Log, $"Compilation finish using {stopwatch.ElapsedMilliseconds}ms");
 		}
 	}
 
