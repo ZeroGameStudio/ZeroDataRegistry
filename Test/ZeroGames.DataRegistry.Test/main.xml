@@ -37,6 +37,7 @@
     <Entity Name="Character">
         <PrimaryKey Type="uint64" Name="Id" />
         <Property Type="OwningItem[]" Name="OwningItems" />
+        <ForeignKey Type="Shared.Constant" Name="Const" />
     </Entity>
     
     <Struct Name="OwningItem">

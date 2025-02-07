@@ -4,6 +4,7 @@ namespace ZeroGames.DataRegistry.Runtime;
 
 public interface IRepository : IRegistryElement
 {
+	IEntity this[object primaryKey] { get; }
 	Type EntityType { get; }
 	IEnumerable<IEntity> Entities { get; }
 }

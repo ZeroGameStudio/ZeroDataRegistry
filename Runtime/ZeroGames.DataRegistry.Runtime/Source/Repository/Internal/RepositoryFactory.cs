@@ -10,7 +10,7 @@ namespace ZeroGames.DataRegistry.Runtime;
 internal class RepositoryFactory
 {
 
-	public delegate IEntity? GetEntityDelegate(Type type, object primaryKey, bool evenIfAbstract);
+	public delegate IEntity? GetEntityDelegate(Type type, object primaryKey);
 	public delegate void FinishInitializationDelegate(GetEntityDelegate getEntity);
 
 	public IInitializingRepository Create(IRegistry registry, Type entityType, out FinishInitializationDelegate finishInitialization)
@@ -381,7 +381,7 @@ internal class RepositoryFactory
 			GetEntityMetadata(implementationType, out var metadata);
 			string[] rawComponents = (entityReferenceElement ?? propertyElement).Value.Split(entityReferenceElement?.Attribute(SEP_ATTRIBUTE_NAME)?.Value ?? DEFAULT_REFERENCE_SEP);
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
-			IEntity? entity = getEntity(implementationType, primaryKey, false);
+			IEntity? entity = getEntity(implementationType, primaryKey);
 			if (notnull && entity is null)
 			{
 				throw new InvalidOperationException();

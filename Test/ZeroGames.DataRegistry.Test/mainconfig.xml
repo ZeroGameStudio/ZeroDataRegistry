@@ -184,6 +184,7 @@
                     </OwningItem>
                 </Element>
             </OwningItems>
+            <Const>2</Const>
         </Character>
         
     </CharacterRepository>

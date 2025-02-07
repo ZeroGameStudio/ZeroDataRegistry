@@ -18,6 +18,7 @@ public class RegistryFactory : IRegistryFactory
 
 		GetRegistryMetadata(typeof(T), out var metadata);
 		
+		Dictionary<Type, IRepository> repositoryByEntityType = [];
 		{ // Stage I: Fill import registries
 			foreach (var importProperty in metadata.Imports)
 			{
@@ -28,12 +29,21 @@ public class RegistryFactory : IRegistryFactory
 					throw new KeyNotFoundException($"Import registry '{name}' not found.");
 				}
 
-				if (!import.GetType().IsAssignableTo(propertyType))
+				Type importType = import.GetType();
+				if (!importType.IsAssignableTo(propertyType))
 				{
 					throw new ArgumentException($"Import registry '{name}' is not assignable to property with type '{propertyType}'.");
 				}
 			
 				importProperty.SetValue(registry, import);
+				
+				GetRegistryMetadata(importType, out var importMetadata);
+				foreach (var repositoryProperty in importMetadata.Repositories)
+				{
+					Type repositoryType = repositoryProperty.PropertyType;
+					Type entityType = repositoryType.GetGenericInstanceOf(typeof(IRepository<,>))!.GetGenericArguments()[1];
+					repositoryByEntityType[entityType] = (IRepository)repositoryProperty.GetValue(import)!;
+				}
 			}
 		}
 		
@@ -42,15 +52,12 @@ public class RegistryFactory : IRegistryFactory
 			PrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>(),
 		};
 		var finishInitializations = new RepositoryFactory.FinishInitializationDelegate[metadata.Repositories.Count];
-		Dictionary<Type, IInitializingRepository> repositoryByEntityType = [];
-
 		{ // Stage II: Allocate all repositories first but not initialize here (only properties defined by IEntity interface is available on entities).
 			int32 i = 0;
 			foreach (var repositoryProperty in metadata.Repositories)
 			{
 				Type propertyType = repositoryProperty.PropertyType;
-				Type[] propertyTypeParameters = propertyType.GetGenericInstanceOf(typeof(IRepository<,>))!.GetGenericArguments();
-				Type entityType = propertyTypeParameters[1];
+				Type entityType = propertyType.GetGenericInstanceOf(typeof(IRepository<,>))!.GetGenericArguments()[1];
 				XElement? root = document.Root?.Element($"{entityType.Name}Repository");
 				if (root is null ^ entityType.IsAbstract)
 				{
@@ -66,7 +73,7 @@ public class RegistryFactory : IRegistryFactory
 				repositoryProperty.SetValue(registry, repository);
 
 				finishInitializations[i++] = finishInitialization;
-				repositoryByEntityType[repository.EntityType] = repository;
+				repositoryByEntityType[entityType] = repository;
 			}
 		}
 		
@@ -81,7 +88,7 @@ public class RegistryFactory : IRegistryFactory
 					         return depth;
 				         }))
 			{
-				IInitializingRepository baseRepository = repositoryByEntityType[repository.EntityType.BaseType!];
+				var baseRepository = (IInitializingRepository)repositoryByEntityType[repository.EntityType.BaseType!];
 				foreach (var entity in repository.Entities)
 				{
 					baseRepository.RegisterEntity(entity, false);
@@ -90,12 +97,7 @@ public class RegistryFactory : IRegistryFactory
 		}
 		
 		{ // Stage IV: Now all entities are in right place, and we can initialize them: Fill data, fixup references, etc.
-			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey, evenIfAbstract) =>
-			{
-				repositoryByEntityType[type].TryGetEntity(primaryKey, evenIfAbstract, out var entity);
-				return entity;
-			};
-		
+			RepositoryFactory.GetEntityDelegate getEntity = (type, primaryKey) => repositoryByEntityType[type][primaryKey];
 			foreach (var finishInitialization in finishInitializations)
 			{
 				finishInitialization(getEntity);
