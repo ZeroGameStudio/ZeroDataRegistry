@@ -1,6 +1,7 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -62,6 +63,7 @@ internal class RepositoryFactory
 		finishInitialization = (getElementType, getEntity) =>
 		{
 			HashSet<object> initializedEntities = [];
+			Dictionary<object, Dictionary<PropertyInfo, XElement>> entityPropertyElementLookup = [];
 
 			void InitializeEntity(object entity, XElement entityElement)
 			{
@@ -90,29 +92,27 @@ internal class RepositoryFactory
 				
 				foreach (var property in metadata.Properties)
 				{
-					object? value = null;
 					XElement? propertyElement = entityElement.Element(property.Name);
 					if (propertyElement is null)
 					{
-						if (baseEntity is not null)
+						if (baseEntity is null)
 						{
-							// IMPORTANT:
-							// Entity will reference the same instance as base entity does if property is reference type.
-							// This can cause visible side effect if we add hot reload support later.
-							value = property.GetValue(baseEntity);
+							throw new InvalidOperationException();
 						}
-					}
-					else
-					{
-						value = Serialize(property.PropertyType, propertyElement, getElementType, getEntity);
+
+						propertyElement = entityPropertyElementLookup[baseEntity][property];
 					}
 					
-					if (!property.IsNullable() && value is null)
-					{
-						throw new InvalidOperationException();
-					}
-					
+					object? value = Serialize(property.PropertyType, propertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
 					property.SetValue(entity, value);
+					
+					if (!entityPropertyElementLookup.TryGetValue(entity, out var lookup))
+					{
+						lookup = [];
+						entityPropertyElementLookup[entity] = lookup;
+					}
+					
+					lookup[property] = propertyElement;
 				}
 				
 				(entity as INotifyInitialization)?.PostInitialize();
@@ -130,6 +130,12 @@ internal class RepositoryFactory
 	}
 	
 	public required IReadOnlyDictionary<Type, Func<string, object>> PrimitiveSerializerMap { private get; init; }
+
+	private readonly struct ReturnNotNull
+	{
+		public static ReturnNotNull True => default;
+		public static ReturnNotNull? False => null;
+	}
 	
 	private readonly struct EntityMetadata
 	{
@@ -196,7 +202,7 @@ internal class RepositoryFactory
 		return components.Length > 1 ? Activator.CreateInstance(metadata.PrimaryKeyType, components)! : components[0];
 	}
 
-	private object? Serialize(Type type, XElement propertyElement, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
+	private object? Serialize(Type type, XElement propertyElement, ReturnNotNull? returnNotNullIfNotContainer, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
 	{
 		if (type.GetGenericInstanceOf(typeof(IReadOnlyList<>)) is {} genericListType)
 		{
@@ -210,12 +216,7 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 				
-				object? value = SerializeNonContainer(elementType, element, getElementType, getEntity);
-				if (value is null)
-				{
-					throw new InvalidOperationException();
-				}
-				
+				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getElementType, getEntity);
 				container.Add(value);
 			}
 
@@ -234,12 +235,7 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 
-				object? value = SerializeNonContainer(elementType, element, getElementType, getEntity);
-				if (value is null)
-				{
-					throw new InvalidOperationException();
-				}
-				
+				object value = SerializeNonContainer(elementType, element, ReturnNotNull.True, getElementType, getEntity);
 				addMethod.Invoke(container, [ value ]);
 			}
 
@@ -258,13 +254,8 @@ internal class RepositoryFactory
 					throw new InvalidOperationException();
 				}
 				
-				object? key = SerializeNonContainer(keyType, element.Element(MAP_KEY_ELEMENT_NAME)!, getElementType, getEntity);
-				object? value = SerializeNonContainer(valueType, element.Element(MAP_VALUE_ELEMENT_NAME)!, getElementType, getEntity);
-				if (key is null || value is null)
-				{
-					throw new InvalidOperationException();
-				}
-				
+				object key = SerializeNonContainer(keyType, element.Element(MAP_KEY_ELEMENT_NAME)!, ReturnNotNull.True, getElementType, getEntity);
+				object value = SerializeNonContainer(valueType, element.Element(MAP_VALUE_ELEMENT_NAME)!, ReturnNotNull.True, getElementType, getEntity);
 				container[key] = value;
 			}
 
@@ -272,25 +263,33 @@ internal class RepositoryFactory
 		}
 		else if (Nullable.GetUnderlyingType(type) is {} underlyingValueType)
 		{
-			return SerializeNonContainer(underlyingValueType, propertyElement, getElementType, getEntity);
+			return SerializeNonContainer(underlyingValueType, propertyElement, ReturnNotNull.False, getElementType, getEntity);
 		}
 
-		return SerializeNonContainer(type, propertyElement, getElementType, getEntity);
+		return SerializeNonContainer(type, propertyElement, returnNotNullIfNotContainer, getElementType, getEntity);
 	}
 
-	private object? SerializeNonContainer(Type type, XElement propertyElement, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
+	[return: NotNullIfNotNull(nameof(returnNotNull))]
+	private object? SerializeNonContainer(Type type, XElement propertyElement, ReturnNotNull? returnNotNull, GetElementTypeDelegate getElementType, GetEntityDelegate getEntity)
 	{
-		if (propertyElement.IsEmpty)
-		{
-			return null;
-		}
-		
+		bool notnull = returnNotNull is not null;
+		bool empty = string.IsNullOrEmpty(propertyElement.Value);
 		if (type.IsEnum)
 		{
+			if (empty)
+			{
+				return notnull ? throw new InvalidOperationException() : null;
+			}
+			
 			return Enum.Parse(type, propertyElement.Value);
 		}
 		else if (type.IsAssignableTo(typeof(IStruct)))
 		{
+			if (empty)
+			{
+				return notnull ? throw new InvalidOperationException() : null;
+			}
+			
 			XElement structElement = propertyElement.Elements().Single();
 			Type implementationType = getElementType(type, structElement);
 			object? instance = Activator.CreateInstance(implementationType);
@@ -301,13 +300,14 @@ internal class RepositoryFactory
 			
 			foreach (var property in implementationType.GetProperties().Where(p => p.GetCustomAttribute<PropertyAttribute>() is not null))
 			{
+				Type propertyType = property.PropertyType;
 				XElement? innerPropertyElement = structElement.Element(property.Name);
-				object? value = innerPropertyElement is not null ? Serialize(property.PropertyType, innerPropertyElement, getElementType, getEntity) : null;
-				if (!property.IsNullable() && value is null)
+				if (innerPropertyElement is null)
 				{
 					throw new InvalidOperationException();
 				}
 				
+				object? value = Serialize(propertyType, innerPropertyElement, property.IsNotNull() ? ReturnNotNull.True : ReturnNotNull.False, getElementType, getEntity);
 				property.SetValue(instance, value);
 			}
 			
@@ -315,6 +315,11 @@ internal class RepositoryFactory
 		}
 		else if (type.IsAssignableTo(typeof(IEntity)))
 		{
+			if (empty)
+			{
+				return notnull ? throw new InvalidOperationException() : null;
+			}
+			
 			XElement entityReferenceElement = propertyElement.Elements().Single();
 			Type implementationType = getElementType(type, entityReferenceElement);
 			GetEntityMetadata(implementationType, out var metadata);
@@ -322,7 +327,12 @@ internal class RepositoryFactory
 			object primaryKey = MakePrimaryKey(metadata, rawComponents);
 			return getEntity(implementationType, primaryKey);
 		}
-		
+
+		if (empty && !notnull)
+		{
+			return null;
+		}
+
 		return SerializePrimitive(type, propertyElement.Value);
 	}
 
@@ -343,24 +353,24 @@ internal class RepositoryFactory
 	private const string SEP_ATTRIBUTE_NAME = "Sep";
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
 	private const string EXTENDS_SEP_ATTRIBUTE_NAME = "ExtendsSep";
-	
+
 	private const string HASHSET_ADD_METHOD_NAME = "Add";
 
 	private const string DEFAULT_REFERENCE_SEP = ",";
 
 	private static readonly IReadOnlyDictionary<Type, Func<string, object>> _fallbackPrimitiveSerializerMap = new Dictionary<Type, Func<string, object>>
 	{
-		[typeof(uint8)] = value => uint8.Parse(value),
-		[typeof(uint16)] = value => uint16.Parse(value),
-		[typeof(uint32)] = value => uint32.Parse(value),
-		[typeof(uint64)] = value => uint64.Parse(value),
-		[typeof(int8)] = value => int8.Parse(value),
-		[typeof(int16)] = value => int16.Parse(value),
-		[typeof(int32)] = value => int32.Parse(value),
-		[typeof(int64)] = value => int64.Parse(value),
-		[typeof(float)] = value => float.Parse(value),
-		[typeof(double)] = value => double.Parse(value),
-		[typeof(bool)] = value => bool.Parse(value),
+		[typeof(uint8)] = value => !string.IsNullOrWhiteSpace(value) ? uint8.Parse(value) : 0,
+		[typeof(uint16)] = value => !string.IsNullOrWhiteSpace(value) ? uint16.Parse(value) : 0,
+		[typeof(uint32)] = value => !string.IsNullOrWhiteSpace(value) ? uint32.Parse(value) : 0,
+		[typeof(uint64)] = value => !string.IsNullOrWhiteSpace(value) ? uint64.Parse(value) : 0,
+		[typeof(int8)] = value => !string.IsNullOrWhiteSpace(value) ? int8.Parse(value) : 0,
+		[typeof(int16)] = value => !string.IsNullOrWhiteSpace(value) ? int16.Parse(value) : 0,
+		[typeof(int32)] = value => !string.IsNullOrWhiteSpace(value) ? int32.Parse(value) : 0,
+		[typeof(int64)] = value => !string.IsNullOrWhiteSpace(value) ? int64.Parse(value) : 0,
+		[typeof(float)] = value => !string.IsNullOrWhiteSpace(value) ? float.Parse(value) : 0,
+		[typeof(double)] = value => !string.IsNullOrWhiteSpace(value) ? double.Parse(value) : 0,
+		[typeof(bool)] = value => !string.IsNullOrWhiteSpace(value) && bool.Parse(value),
 		[typeof(string)] = value => value,
 	};
 	

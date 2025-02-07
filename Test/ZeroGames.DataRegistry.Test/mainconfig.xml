@@ -6,9 +6,9 @@
     <ItemRepository>
         <Item>
             <Id>10001</Id>
-            <Name>生命药水</Name>
+            <Name/>
             <Uri>10001</Uri>
-            <Desc>回复50点生命值</Desc>
+            <Desc></Desc>
             <Icons>
                 <Element><Icon>10001001</Icon></Element>
                 <Element><Icon>10001002</Icon></Element>
@@ -31,6 +31,7 @@
                     <Value>200</Value>
                 </Element>
             </AttributeMap>
+            <Icon><Icon>10001001</Icon></Icon>
         </Item>
         
         <Item Extends="10001,10001">
@@ -82,6 +83,7 @@
             </AttachPoint>
             <DamageType>Phys</DamageType>
             <Damage>10</Damage>
+            <Icon></Icon>
         </Weapon>
     </WeaponRepository>
 

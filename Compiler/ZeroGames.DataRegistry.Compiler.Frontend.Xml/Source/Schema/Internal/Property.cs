@@ -13,7 +13,6 @@ internal sealed class Property : SchemaElementBase, IProperty, ISetupDependencie
 	public required EPropertyRole Role { get; init; }
 	public IDataType Type { get; private set; } = null!;
 	public required Func<IDataType> TypeFactory { private get; init; }
-	public required string DefaultValue { get; init; }
 }
 
 

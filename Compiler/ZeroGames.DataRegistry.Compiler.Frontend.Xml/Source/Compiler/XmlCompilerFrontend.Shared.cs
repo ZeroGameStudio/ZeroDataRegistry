@@ -85,7 +85,6 @@ public partial class XmlCompilerFrontend
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
 	private const string KEY_ATTRIBUTE_NAME = "Key";
 	private const string VALUE_ATTRIBUTE_NAME = "Value";
-	private const string DEFAULT_ATTRIBUTE_NAME = "Default";
 
 	[GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$")]
 	private static partial Regex _identifierRegex { get; }

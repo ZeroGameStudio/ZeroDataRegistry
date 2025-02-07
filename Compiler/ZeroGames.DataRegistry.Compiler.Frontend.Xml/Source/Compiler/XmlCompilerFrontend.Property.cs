@@ -46,7 +46,6 @@ public partial class XmlCompilerFrontend
 			Role = GetPropertyRole(propertyElement),
 			Name = GetName(propertyElement),
 			TypeFactory = ParsePropertyType(propertyElement, schema),
-			DefaultValue = propertyElement.Attribute(DEFAULT_ATTRIBUTE_NAME)?.Value ?? string.Empty,
 			Metadatas = ParseMetadatas(propertyElement, schema),
 		};
 	}
@@ -55,7 +54,7 @@ public partial class XmlCompilerFrontend
 	{
 		if (propertyElement.Name == PROPERTY_ELEMENT_NAME)
 		{
-			return EPropertyRole.Default;
+			return EPropertyRole.Property;
 		}
 		else if (propertyElement.Name == PRIMARY_KEY_ELEMENT_NAME)
 		{

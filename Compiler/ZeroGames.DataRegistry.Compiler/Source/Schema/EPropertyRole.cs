@@ -4,7 +4,7 @@ namespace ZeroGames.DataRegistry.Compiler;
 
 public enum EPropertyRole : uint8
 {
-	Default,
+	Property,
 	PrimaryKey,
 	ForeignKey,
 }

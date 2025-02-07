@@ -14,6 +14,7 @@
         <Property Type="string[]" Name="Strings" />
         <Property Type="string{}" Name="StringSet" />
         <Property Type="string->int32" Name="AttributeMap" />
+        <ForeignKey Type="Icon?" Name="Icon" />
     </Entity>
     
     <Entity Name="Weapon" Extends="Item" Namespace="System">

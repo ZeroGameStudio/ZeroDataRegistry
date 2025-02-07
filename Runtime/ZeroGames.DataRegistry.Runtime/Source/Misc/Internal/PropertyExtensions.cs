@@ -8,8 +8,19 @@ public static class PropertyExtensions
 {
 
 	public static bool IsNullable(this PropertyInfo @this)
-		=> new NullabilityInfoContext().Create(@this).ReadState != NullabilityState.NotNull;
-	
+	{
+		if (@this.PropertyType.IsValueType)
+		{
+			return Nullable.GetUnderlyingType(@this.PropertyType) is not null;
+		}
+		else
+		{
+			return new NullabilityInfoContext().Create(@this).ReadState != NullabilityState.NotNull;
+		}
+	}
+
+	public static bool IsNotNull(this PropertyInfo @this) => !@this.IsNullable();
+
 }
 
 

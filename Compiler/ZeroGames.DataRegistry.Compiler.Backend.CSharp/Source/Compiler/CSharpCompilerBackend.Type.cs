@@ -129,8 +129,7 @@ public {GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 				throw new NotSupportedException("Property name 'PrimaryKey' is reserved.");
 			}
 			
-			string defaultValueCode = !string.IsNullOrWhiteSpace(property.DefaultValue) ? $"(Default = \"{property.DefaultValue}\")" : string.Empty;
-			string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : $"[Property{defaultValueCode}]";
+			string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : "[Property]";
 			return $"{attributeCode}{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
 		}));
 
