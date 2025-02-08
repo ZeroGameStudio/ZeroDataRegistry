@@ -20,8 +20,9 @@ internal sealed class CompilerClient
 		Error = 2,
 	}
 
-	public CompilerClient(string sources, string outputDir, string configOverride, Action<ELogLevel, object> logger)
+	public CompilerClient(string sourceDirs, string sources, string outputDir, string configOverride, Action<ELogLevel, object> logger)
 	{
+		_sourceDirs = sourceDirs.Split(';');
 		_sources = sources.Split(';').Select(source => new SchemaSourceUri(source)).ToHashSet();
 		_outputDir = outputDir;
 		_configOverride = configOverride;
@@ -65,7 +66,7 @@ internal sealed class CompilerClient
 
 	private ISchemaSourceResolver CreateSchemaSourceResolver()
 	{
-		return new SchemaSourceResolver(_config.SourceDirs);
+		return new SchemaSourceResolver(_sourceDirs);
 	}
 
 	private IReadOnlyDictionary<SchemaSourceForm, ICompilerFrontend> CreateFrontend()
@@ -188,6 +189,7 @@ internal sealed class CompilerClient
 		return success;
 	}
 
+	private readonly IReadOnlyList<string> _sourceDirs;
 	private readonly IReadOnlySet<SchemaSourceUri> _sources;
 	private readonly string _outputDir;
 	private readonly string _configOverride;

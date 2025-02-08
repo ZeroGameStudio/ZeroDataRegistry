@@ -1,8 +1,4 @@
 {
-	"SourceDirs": [
-		"D:/Projects/CSharp/ZeroDataRegistry/Test"
-	],
-	
 	"UInt8TypeName": "uint8",
 	"UInt16TypeName": "uint16",
 	"UInt32TypeName": "uint32",

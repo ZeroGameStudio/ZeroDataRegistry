@@ -4,8 +4,6 @@ namespace ZeroGames.DataRegistry.Compiler.Client;
 
 internal readonly struct CompilerClientConfig
 {
-	public required List<string> SourceDirs { get; init; }
-	
 	public required string UInt8TypeName { get; init; }
 	public required string UInt16TypeName { get; init; }
 	public required string UInt32TypeName { get; init; }

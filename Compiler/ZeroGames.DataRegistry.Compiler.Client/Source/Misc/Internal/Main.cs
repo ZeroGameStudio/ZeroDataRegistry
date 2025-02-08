@@ -1,13 +1,8 @@
 ﻿// Copyright Zero Games. All Rights Reserved.
 
-using System.Linq.Expressions;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
-using System.Xml.XPath;
 using ZeroGames.DataRegistry.Compiler.Client;
 
+string sourceDirs = string.Empty;
 string sources = string.Empty;
 string outputDir = string.Empty;
 string configOverride = string.Empty;
@@ -18,6 +13,11 @@ foreach (var arg in args)
 	string value = kv.Length > 1 ? kv[1] : string.Empty;
 	switch (name)
 	{
+		case "sourcedirs":
+		{
+			sourceDirs = value;
+			break;
+		}
 		case "sources":
 		{
 			sources = value;
@@ -38,6 +38,11 @@ foreach (var arg in args)
 			throw new ArgumentOutOfRangeException($"Unknown argument: {name}");
 		}
 	}
+}
+
+if (string.IsNullOrWhiteSpace(sourceDirs))
+{
+	throw new ArgumentOutOfRangeException(nameof(sourceDirs));
 }
 
 if (string.IsNullOrWhiteSpace(sources))
@@ -70,6 +75,6 @@ Action<CompilerClient.ELogLevel, object> logger = (logLevel, message) =>
 	}
 };
 
-return new CompilerClient(sources, outputDir, configOverride, logger).Compile() ? 0 : -1;
+return new CompilerClient(sourceDirs, sources, outputDir, configOverride, logger).Compile() ? 0 : -1;
 
 
