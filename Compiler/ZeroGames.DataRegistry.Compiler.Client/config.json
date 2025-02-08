@@ -21,6 +21,7 @@
 	"MapTypeName": "map",
 	"OptionalTypeName": "optional",
 	
+	"DefaultPrimaryKey": "Id",
 	"DefaultEnumUnderlyingTypeName": "uint8",
 	
 	"ImplicitlyUsings": [

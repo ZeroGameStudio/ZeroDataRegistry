@@ -11,7 +11,7 @@
         <Property Type="string?" Name="Desc" />
     </Interface>
 
-    <Entity Name="Constant" PrimaryKey="Id">
+    <Entity Name="Constant">
         <Property Type="uint64" Name="Id" />
         <Property Type="string" Name="Value" />
     </Entity>

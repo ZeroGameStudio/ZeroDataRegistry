@@ -74,6 +74,7 @@ internal sealed class CompilerClient
 		{
 			[new("xml")] = new XmlCompilerFrontend(new()
 			{
+				DefaultPrimaryKey = _config.DefaultPrimaryKey,
 				DefaultEnumUnderlyingTypeName = _config.DefaultEnumUnderlyingTypeName,
 			}),
 		};

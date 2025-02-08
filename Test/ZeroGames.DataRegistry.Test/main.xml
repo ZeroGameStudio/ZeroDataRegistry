@@ -29,12 +29,12 @@
         <Property Type="double" Name="Defence" />
     </Entity>
     
-    <Entity Name="Icon" PrimaryKey="Id">
+    <Entity Name="Icon">
         <Property Type="uint64" Name="Id" />
         <Property Type="string" Name="Path" />
     </Entity>
     
-    <Entity Name="Character" PrimaryKey="Id">
+    <Entity Name="Character">
         <Property Type="uint64" Name="Id" />
         <Property Type="OwningItem[]" Name="OwningItems" />
         <Property Type="Shared.Constant" Name="Const" />

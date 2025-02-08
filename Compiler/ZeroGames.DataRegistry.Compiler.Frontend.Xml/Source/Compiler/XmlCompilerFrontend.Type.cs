@@ -53,7 +53,15 @@ public partial class XmlCompilerFrontend
 		XAttribute? extendsAttribute = entityElement.Attribute(EXTENDS_ATTRIBUTE_NAME);
 		if (primaryKey is null && extendsAttribute is null)
 		{
-			throw new ParserException("Entity primary key not found.");
+			if (!string.IsNullOrWhiteSpace(_options.DefaultPrimaryKey))
+			{
+				primaryKey = _options.DefaultPrimaryKey;
+			}
+
+			if (primaryKey is null)
+			{
+				throw new ParserException("Entity primary key not found.");
+			}
 		}
 
 		if (primaryKey is not null && extendsAttribute is not null)

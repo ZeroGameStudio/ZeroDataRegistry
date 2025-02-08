@@ -24,6 +24,7 @@ internal readonly struct CompilerClientConfig
 	public required string MapTypeName { get; init; }
 	public required string OptionalTypeName { get; init; }
 	
+	public string? DefaultPrimaryKey { get; init; }
 	public string? DefaultEnumUnderlyingTypeName { get; init; }
 	
 	public required HashSet<string> ImplicitlyUsings { get; init; }
