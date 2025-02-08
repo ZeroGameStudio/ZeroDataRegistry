@@ -11,4 +11,6 @@ var mainRegistry = new RegistryFactory().Create<MainRegistry>(IXDocumentProvider
 Console.ReadKey();
 Console.WriteLine("exit...");
 
+// schema主键/外键配置方式优化、zdml语法糖提前到源码层而不是运行时、合并、变换、Excel、Validator
+
 

@@ -73,8 +73,6 @@ public partial class XmlCompilerFrontend
 	private const string STRUCT_ELEMENT_NAME = "Struct";
 	private const string INTERFACE_ELEMENT_NAME = "Interface";
 	private const string ENUM_ELEMENT_NAME = "Enum";
-	private const string PRIMARY_KEY_ELEMENT_NAME = "PrimaryKey";
-	private const string FOREIGN_KEY_ELEMENT_NAME = "ForeignKey";
 	private const string PROPERTY_ELEMENT_NAME = "Property";
 	private const string ENUM_ELEMENT_ELEMENT_NAME = "Element";
 
@@ -82,6 +80,7 @@ public partial class XmlCompilerFrontend
 	private const string ALIAS_ATTRIBUTE_NAME = "Alias";
 	private const string NAME_ATTRIBUTE_NAME = "Name";
 	private const string NAMESPACE_ATTRIBUTE_NAME = "Namespace";
+	private const string PRIMARY_KEY_ATTRIBUTE_NAME = "PrimaryKey";
 	private const string TYPE_ATTRIBUTE_NAME = "Type";
 	private const string EXTENDS_ATTRIBUTE_NAME = "Extends";
 	private const string IMPLEMENTS_ATTRIBUTE_NAME = "Implements";

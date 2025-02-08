@@ -91,7 +91,7 @@ internal class RepositoryFactory
 					(entity as INotifyInitialization)?.PreInitialize();
 				}
 				
-				foreach (var property in metadata.Properties)
+				foreach (var property in metadata.RemainingProperties)
 				{
 					XElement? propertyElement = entityElement.Element(property.Name);
 					if (propertyElement is null)
@@ -163,7 +163,7 @@ internal class RepositoryFactory
 	private readonly struct EntityMetadata
 	{
 		public required IReadOnlyList<PropertyInfo> PrimaryKeyComponents { get; init; }
-		public required IReadOnlyList<PropertyInfo> Properties { get; init; }
+		public required IReadOnlyList<PropertyInfo> RemainingProperties { get; init; }
 
 		public Type PrimaryKeyType => PrimaryKeyComponents.Count switch
 		{
@@ -187,25 +187,11 @@ internal class RepositoryFactory
 				return;
 			}
 			
-			List<PropertyInfo> primaryKeyComponents = [];
-			List<PropertyInfo> properties = [];
-
-			foreach (var property in entityType.GetProperties())
-			{
-				if (property.GetCustomAttribute<PrimaryKeyAttribute>() is not null)
-				{
-					primaryKeyComponents.Add(property);
-				}
-				else if (property.GetCustomAttribute<PropertyAttribute>() is not null)
-				{
-					properties.Add(property);
-				}
-			}
-
+			PrimaryKeyAttribute primaryKeyAttribute = entityType.GetCustomAttribute<PrimaryKeyAttribute>()!;
 			metadata = new()
 			{
-				PrimaryKeyComponents = primaryKeyComponents,
-				Properties = properties,
+				PrimaryKeyComponents = primaryKeyAttribute.Components.Select(component => entityType.GetProperty(component)!).ToArray(),
+				RemainingProperties = entityType.GetProperties().Where(property => property.GetCustomAttribute<PropertyAttribute>() is not null && !primaryKeyAttribute.Components.Contains(property.Name)).ToArray(),
 			};
 			_metadata[entityType] = metadata;
 		}

@@ -3,6 +3,6 @@
 namespace ZeroGames.DataRegistry.Runtime;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class PropertyAttribute : Attribute;
+public sealed class PropertyAttribute : Attribute;
 
 

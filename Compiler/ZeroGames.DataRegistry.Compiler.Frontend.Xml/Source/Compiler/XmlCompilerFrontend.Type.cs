@@ -49,8 +49,37 @@ public partial class XmlCompilerFrontend
 	
 	private IEntityDataType ParseEntity(XElement entityElement, ISchema schema)
 	{
-		IReadOnlyList<IProperty> properties = ParseProperties(entityElement, schema);
-		IReadOnlyList<IProperty> primaryKeyComponents = properties.Where(property => property.Role == EPropertyRole.PrimaryKey).ToArray();
+		string? primaryKey = entityElement.Attribute(PRIMARY_KEY_ATTRIBUTE_NAME)?.Value;
+		XAttribute? extendsAttribute = entityElement.Attribute(EXTENDS_ATTRIBUTE_NAME);
+		if (primaryKey is null && extendsAttribute is null)
+		{
+			throw new ParserException("Entity primary key not found.");
+		}
+
+		if (primaryKey is not null && extendsAttribute is not null)
+		{
+			throw new ParserException("Inherited entity defines primary key.");
+		}
+
+		if (primaryKey is not null && string.IsNullOrWhiteSpace(primaryKey))
+		{
+			throw new ParserException("Entity primary key is empty.");
+		}
+		
+		string[] components = primaryKey is not null ? primaryKey.Replace(" ", "").Split(',') : [];
+		HashSet<string> componentSet = components.ToHashSet();
+		if (components.Length != componentSet.Count)
+		{
+			throw new ParserException("Duplicated primary key component.");
+		}
+		
+		IReadOnlyList<IProperty> properties = ParseProperties(entityElement, schema, componentSet);
+		IReadOnlyList<IProperty> primaryKeyComponents = properties.Where(property => componentSet.Contains(property.Name)).ToArray();
+		if (primaryKeyComponents.Count != componentSet.Count)
+		{
+			throw new ParserException("Undefined primary key component.");
+		}
+		
 		if (primaryKeyComponents.Count > 7)
 		{
 			throw new NotSupportedException("Primary key more than 7-dimension is not supported.");
@@ -80,7 +109,7 @@ public partial class XmlCompilerFrontend
 			BaseTypeFactory = ParseBaseType<IStructDataType>(structElement, schema),
 			InterfaceFactory = ParseImplementedInterfaces(structElement, schema),
 			IsAbstract = structElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
-			Properties = ParseProperties(structElement, schema),
+			Properties = ParseProperties(structElement, schema, []),
 			Metadatas = ParseMetadatas(structElement, schema),
 		};
 	}
@@ -94,7 +123,7 @@ public partial class XmlCompilerFrontend
 			Namespace =  GetNamespace(interfaceElement),
 			InterfaceFactory = ParseImplementedInterfaces(interfaceElement, schema),
 			IsAbstract = interfaceElement.Attribute(ABSTRACT_ATTRIBUTE_NAME) is {} abstractAttr && bool.Parse(abstractAttr.Value),
-			Properties = ParseProperties(interfaceElement, schema),
+			Properties = ParseProperties(interfaceElement, schema, []),
 			Metadatas = ParseMetadatas(interfaceElement, schema),
 		};
 	}

@@ -2,6 +2,10 @@
 
 namespace ZeroGames.DataRegistry.Runtime;
 
-public sealed class PrimaryKeyAttribute : PropertyAttribute;
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class PrimaryKeyAttribute(params string[] components) : Attribute
+{
+	public IReadOnlyList<string> Components { get; } = components;
+}
 
 

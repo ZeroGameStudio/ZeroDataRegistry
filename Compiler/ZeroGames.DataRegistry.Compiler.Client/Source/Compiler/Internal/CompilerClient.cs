@@ -124,6 +124,7 @@ internal sealed class CompilerClient
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 
+		bool success = true;
 		try
 		{
 			if (Directory.Exists(_outputDir))
@@ -137,61 +138,53 @@ internal sealed class CompilerClient
 			}
 
 			Directory.CreateDirectory(_outputDir);
-
-			bool success = true;
-			try
+			
+			ICompiler server = CreateServer();
+			await foreach (var result in server.CompileAsync(_sources))
 			{
-				ICompiler server = CreateServer();
-				await foreach (var result in server.CompileAsync(_sources))
+				ELogLevel logLevel = result.ErrorLevel switch
 				{
-					ELogLevel logLevel = result.ErrorLevel switch
-					{
-						ECompilationErrorLevel.Success or ECompilationErrorLevel.Info => ELogLevel.Log,
-						ECompilationErrorLevel.Warning => ELogLevel.Warning,
-						ECompilationErrorLevel.Error => ELogLevel.Error,
-						_ => ELogLevel.Log,
-					};
-					_logger(logLevel, $"{result.Properties["Uri"]} - {result.Message}");
-					if (result.ErrorLevel > ECompilationErrorLevel.Warning)
-					{
-						success = false;
-						continue;
-					}
-
-					Stream dest = result.Dest;
-					string outputDir = $"{_outputDir}/{result.Properties["Schema"]}";
-					if (!Directory.Exists(outputDir))
-					{
-						Directory.CreateDirectory(outputDir);
-					}
-
-					string outputPath = $"{outputDir}/{result.Properties["Name"]}.cs";
-					await using FileStream fs = File.OpenWrite(outputPath);
-					await dest.CopyToAsync(fs);
-					_logger(ELogLevel.Log, $"File generated: {outputPath}");
+					ECompilationErrorLevel.Success or ECompilationErrorLevel.Info => ELogLevel.Log,
+					ECompilationErrorLevel.Warning => ELogLevel.Warning,
+					ECompilationErrorLevel.Error => ELogLevel.Error,
+					_ => ELogLevel.Log,
+				};
+				_logger(logLevel, $"{result.Properties["Uri"]} - {result.Message}");
+				if (result.ErrorLevel > ECompilationErrorLevel.Warning)
+				{
+					success = false;
+					continue;
 				}
-			}
-			catch (Exception)
-			{
-				success = false;
-			}
 
+				Stream dest = result.Dest;
+				string outputDir = $"{_outputDir}/{result.Properties["Schema"]}";
+				if (!Directory.Exists(outputDir))
+				{
+					Directory.CreateDirectory(outputDir);
+				}
+
+				string outputPath = $"{outputDir}/{result.Properties["Name"]}.cs";
+				await using FileStream fs = File.OpenWrite(outputPath);
+				await dest.CopyToAsync(fs);
+				_logger(ELogLevel.Log, $"File generated: {outputPath}");
+			}
+		}
+		catch (Exception)
+		{
+			success = false;
+			throw;
+		}
+		finally
+		{
 			if (!success)
 			{
 				Directory.Delete(_outputDir, true);
 			}
-
-			return success;
-		}
-		catch (Exception ex)
-		{
-			_logger(ELogLevel.Error, ex);
-			return false;
-		}
-		finally
-		{
+			
 			_logger(ELogLevel.Log, $"Compilation finish using {stopwatch.ElapsedMilliseconds}ms");
 		}
+		
+		return success;
 	}
 
 	private readonly IReadOnlySet<SchemaSourceUri> _sources;

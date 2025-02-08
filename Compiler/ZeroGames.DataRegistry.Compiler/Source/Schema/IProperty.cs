@@ -4,7 +4,6 @@ namespace ZeroGames.DataRegistry.Compiler;
 
 public interface IProperty : ISchemaElement
 {
-	EPropertyRole Role { get; }
 	IDataType Type { get; }
 }
 

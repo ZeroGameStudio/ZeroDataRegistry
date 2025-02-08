@@ -107,8 +107,12 @@ public partial class CSharpCompilerBackend
 
 	private string GetTypeDefinitionCode(IUserDefinedDataType type)
 	{
+		string primaryKeyAttributeCode = type is IEntityDataType { BaseType: null } entityType
+			? $"{Environment.NewLine}[PrimaryKey({string.Join(", ", entityType.PrimaryKeyComponents.Select(component => $"nameof({component.Name})"))})]"
+			: string.Empty;
+		
 		return
-$@"{GetSchemaAttributeCode(type.Schema)}
+$@"{GetSchemaAttributeCode(type.Schema)}{primaryKeyAttributeCode}
 {GetGeneratedCodeAttributeCode()}
 public {GetAbstractModifierCode(type)}{GetPartialModifierCode(type)}{GetTypeKindCode(type)} {type.Name}{GetBaseTypeCode(type)}
 {{
@@ -150,8 +154,7 @@ public {GetAbstractModifierCode(type)}{GetPartialModifierCode(type)}{GetTypeKind
 			}
 			else
 			{
-				string attributeCode = property.Role == EPropertyRole.PrimaryKey ? "[PrimaryKey]" : "[Property]";
-				return $"{attributeCode}{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
+				return $"[Property]{Environment.NewLine}public required {GetTypeNameCode(property.Type)} {property.Name} {{ get; init; }}";
 			}
 		}));
 	}

@@ -5,17 +5,17 @@
     
     <Import Uri="shared" Alias="Shared" />
     
-    <Entity Name="ItemBase" Namespace="System" Abstract="true">
-        <PrimaryKey Type="uint64" Name="Id" />
-        <PrimaryKey Type="string" Name="Uri" />
+    <Entity Abstract="true" Name="ItemBase" Namespace="System" PrimaryKey="Id, Uri">
+        <Property Type="uint64" Name="Id" />
+        <Property Type="string" Name="Uri" />
     </Entity>
 
     <Entity Name="Item" Namespace="System" Extends="ItemBase" Implements="Shared.INameProvider, Shared.IDescProvider">
-        <ForeignKey Type="Icon[]" Name="Icons" />
+        <Property Type="Icon[]" Name="Icons" />
         <Property Type="string[]" Name="Strings" />
         <Property Type="string{}" Name="StringSet" />
         <Property Type="string->int32" Name="AttributeMap" />
-        <ForeignKey Type="Icon?" Name="Icon" />
+        <Property Type="Icon?" Name="Icon" />
     </Entity>
     
     <Entity Name="Weapon" Namespace="System" Extends="Item">
@@ -29,19 +29,19 @@
         <Property Type="double" Name="Defence" />
     </Entity>
     
-    <Entity Name="Icon">
-        <PrimaryKey Type="uint64" Name="Id" />
+    <Entity Name="Icon" PrimaryKey="Id">
+        <Property Type="uint64" Name="Id" />
         <Property Type="string" Name="Path" />
     </Entity>
     
-    <Entity Name="Character">
-        <PrimaryKey Type="uint64" Name="Id" />
+    <Entity Name="Character" PrimaryKey="Id">
+        <Property Type="uint64" Name="Id" />
         <Property Type="OwningItem[]" Name="OwningItems" />
-        <ForeignKey Type="Shared.Constant" Name="Const" />
+        <Property Type="Shared.Constant" Name="Const" />
     </Entity>
     
     <Struct Name="OwningItem">
-        <ForeignKey Type="Item" Name="Item" />
+        <Property Type="Item" Name="Item" />
         <Property Type="int32" Name="Num" />
     </Struct>
 

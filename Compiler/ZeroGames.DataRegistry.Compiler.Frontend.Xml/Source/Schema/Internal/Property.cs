@@ -7,12 +7,13 @@ internal sealed class Property : SchemaElementBase, IProperty, ISetupDependencie
 	public bool SetupDependencies()
 	{
 		Type = TypeFactory();
-		return Role != EPropertyRole.PrimaryKey || Type is IPrimitiveDataType { CanBeKey: true };
+		return !IsPrimaryKeyComponent || Type is IPrimitiveDataType { CanBeKey: true };
 	}
 	
-	public required EPropertyRole Role { get; init; }
 	public IDataType Type { get; private set; } = null!;
 	public required Func<IDataType> TypeFactory { private get; init; }
+	
+	public required bool IsPrimaryKeyComponent { private get; init; }
 }
 
 

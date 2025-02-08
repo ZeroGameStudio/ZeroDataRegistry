@@ -8,10 +8,8 @@ namespace ZeroGames.DataRegistry.Compiler.Frontend.Xml;
 public partial class XmlCompilerFrontend
 {
 
-	private IReadOnlyList<IProperty> ParseProperties(XElement compositeTypeElement, ISchema schema)
+	private IReadOnlyList<IProperty> ParseProperties(XElement compositeTypeElement, ISchema schema, IReadOnlyCollection<string> primaryKeyComponents)
 	{
-		bool requiresPrimaryKey = compositeTypeElement.Name == ENTITY_ELEMENT_NAME && compositeTypeElement.Attribute(EXTENDS_ATTRIBUTE_NAME) is null;
-		bool primaryKeyFound = false;
 		List<IProperty> result = new();
 		foreach (var element in compositeTypeElement.Elements())
 		{
@@ -20,56 +18,30 @@ public partial class XmlCompilerFrontend
 				continue;
 			}
 
-			if (element.Name == PRIMARY_KEY_ELEMENT_NAME && !requiresPrimaryKey)
+			if (element.Name != PROPERTY_ELEMENT_NAME)
 			{
 				throw new ParserException();
 			}
 
-			primaryKeyFound = true;
-
-			result.Add(ParseProperty(element, schema));
-		}
-
-		if (requiresPrimaryKey && !primaryKeyFound)
-		{
-			throw new ParserException();
+			result.Add(ParseProperty(element, schema, primaryKeyComponents));
 		}
 
 		return result;
 	}
 	
-	private IProperty ParseProperty(XElement propertyElement, ISchema schema)
+	private IProperty ParseProperty(XElement propertyElement, ISchema schema, IEnumerable<string> primaryKeyComponents)
 	{
+		string name = GetName(propertyElement);
 		return new Property
 		{
 			Schema = schema,
-			Role = GetPropertyRole(propertyElement),
-			Name = GetName(propertyElement),
+			Name = name,
 			TypeFactory = ParsePropertyType(propertyElement, schema),
+			IsPrimaryKeyComponent = primaryKeyComponents.Contains(name),
 			Metadatas = ParseMetadatas(propertyElement, schema),
 		};
 	}
 
-	private EPropertyRole GetPropertyRole(XElement propertyElement)
-	{
-		if (propertyElement.Name == PROPERTY_ELEMENT_NAME)
-		{
-			return EPropertyRole.Property;
-		}
-		else if (propertyElement.Name == PRIMARY_KEY_ELEMENT_NAME)
-		{
-			return EPropertyRole.PrimaryKey;
-		}
-		else if (propertyElement.Name == FOREIGN_KEY_ELEMENT_NAME)
-		{
-			return EPropertyRole.ForeignKey;
-		}
-		else
-		{
-			throw new ParserException();
-		}
-	}
-	
 	private Func<IDataType> ParsePropertyType(XElement propertyElement, ISchema propertySchema)
 	{
 		string? path = propertyElement.Attribute(TYPE_ATTRIBUTE_NAME)?.Value;
@@ -201,17 +173,7 @@ public partial class XmlCompilerFrontend
 		string[] nodes = path.Split('.');
 		ISchema schema = nodes.Length == 2 ? propertySchema.ImportMap[nodes[0]] : propertySchema;
 		string typeName = nodes.Last();
-		return () =>
-		{
-			bool foreignKey = propertyElement.Name == FOREIGN_KEY_ELEMENT_NAME;
-			IDataType type = schema.DataTypes.FirstOrDefault(type => type.Name == typeName) ?? (IDataType)CompilationContext.GetPrimitiveDataType(typeName);
-			if (foreignKey ^ type is IEntityDataType)
-			{
-				throw new ParserException();
-			}
-
-			return type;
-		};
+		return () => schema.DataTypes.FirstOrDefault(type => type.Name == typeName) ?? (IDataType)CompilationContext.GetPrimitiveDataType(typeName);;
 	}
 	
 	[GeneratedRegex("^([A-Za-z_][A-Za-z0-9_]*)(\\.[A-Za-z_][A-Za-z0-9_]*)?->([A-Za-z_][A-Za-z0-9_]*)(\\.[A-Za-z_][A-Za-z0-9_]*)?$")]
